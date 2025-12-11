@@ -24,6 +24,7 @@
 - InventorySkillsController mediates inventory/skills actions and save/exit, connected to ActionBars and panels.
 - TownController mediates TownPanel intents, delegating to shared callbacks (rest/craft/map/inventory/skills/save).
 - Main refreshes inventory/skills via controller instead of direct panel calls.
+- AccountPanel is now a separate full-screen scene; AccountController mediates account/character intents and handles GameState calls + log/status/visibility updates.
 
 ## Next Steps (future passes)
 - Apply the same mediator pattern to map/zone/node panels (travel/harvest/combat).

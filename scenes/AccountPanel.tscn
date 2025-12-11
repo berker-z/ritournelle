@@ -1,0 +1,163 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/AccountPanel.gd" id="1"]
+
+[node name="AccountPanel" type="Control"]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.05, 0.07, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+mouse_filter = 1
+
+[node name="PanelContainer" type="PanelContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/PanelContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Accounts & Characters"
+
+[node name="CloseButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+text = "Close"
+custom_minimum_size = Vector2(0, 36)
+
+[node name="AccountSection" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="AccountLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection"]
+layout_mode = 2
+text = "Account"
+
+[node name="AccountSelectRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="AccountSelect" type="OptionButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection/AccountSelectRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 40)
+
+[node name="SelectAccountButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection/AccountSelectRow"]
+layout_mode = 2
+text = "Select Account"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="AccountCreateRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="AccountNameInput" type="LineEdit" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection/AccountCreateRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "New account name"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="CreateAccountButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/AccountSection/AccountCreateRow"]
+layout_mode = 2
+text = "Create Account"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="CharacterSection" type="VBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="CharacterLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection"]
+layout_mode = 2
+text = "Character"
+
+[node name="CharacterNameRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/CharacterNameRow"]
+layout_mode = 2
+text = "Name"
+
+[node name="NameInput" type="LineEdit" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/CharacterNameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter character name"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="CreateRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CreateHarvesterButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/CreateRow"]
+layout_mode = 2
+text = "Create Harvester"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="CreateFighterButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/CreateRow"]
+layout_mode = 2
+text = "Create Fighter"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="ManageRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CharacterSelect" type="OptionButton" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/ManageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SelectButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/ManageRow"]
+layout_mode = 2
+text = "Select"
+custom_minimum_size = Vector2(0, 40)
+
+[node name="DeleteButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/CharacterSection/ManageRow"]
+layout_mode = 2
+text = "Delete"
+custom_minimum_size = Vector2(0, 40)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://c54ne36dr70pf"]
+[gd_scene load_steps=11 format=3 uid="uid://c54ne36dr70pf"]
 
 [ext_resource type="Script" uid="uid://b021djhgcubdx" path="res://scenes/Main.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/InventoryPanel.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ZonePanel.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/NodePanel.tscn" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/InfoBox.tscn" id="9"]
+[ext_resource type="PackedScene" path="res://scenes/AccountPanel.tscn" id="10"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -48,100 +49,6 @@ theme_override_constants/separation = 10
 layout_mode = 2
 text = "Ritournelle Text Harness"
 horizontal_alignment = 1
-
-[node name="AccountBox" type="VBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="AccountLabel" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox"]
-layout_mode = 2
-text = "Account"
-
-[node name="AccountSelectRow" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="AccountSelect" type="OptionButton" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountSelectRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 40)
-
-[node name="SelectAccountButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountSelectRow"]
-layout_mode = 2
-text = "Select Account"
-custom_minimum_size = Vector2(0, 40)
-
-[node name="AccountCreateRow" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="AccountNameInput" type="LineEdit" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountCreateRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-placeholder_text = "New account name"
-custom_minimum_size = Vector2(0, 40)
-
-[node name="CreateAccountButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountCreateRow"]
-layout_mode = 2
-text = "Create Account"
-custom_minimum_size = Vector2(0, 40)
-
-[node name="CharacterBox" type="VBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="CharacterLabel" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox"]
-layout_mode = 2
-text = "Character"
-
-[node name="CharacterNameRow" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="NameLabel" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow"]
-layout_mode = 2
-text = "Name"
-
-[node name="NameInput" type="LineEdit" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-placeholder_text = "Enter character name"
-custom_minimum_size = Vector2(0, 40)
-
-[node name="CreateRow" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="CreateHarvesterButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CreateRow"]
-layout_mode = 2
-text = "Create Harvester"
-
-[node name="CreateFighterButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CreateRow"]
-layout_mode = 2
-text = "Create Fighter"
-
-[node name="ManageRow" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="CharacterSelect" type="OptionButton" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="SelectButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow"]
-layout_mode = 2
-text = "Select"
-
-[node name="DeleteButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow"]
-layout_mode = 2
-text = "Delete"
 
 [node name="NavigationLabel" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -184,3 +91,5 @@ autowrap_mode = 2
 [node name="InventoryPanel" parent="." instance=ExtResource("2")]
 
 [node name="SkillsPanel" parent="." instance=ExtResource("3")]
+
+[node name="AccountPanel" parent="." instance=ExtResource("10")]

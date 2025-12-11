@@ -3,18 +3,6 @@ extends Control
 # UI references
 @onready var log_box: Control = $ScrollContainer/MarginContainer/VBoxContainer/LogBox
 @onready var status_label: Label = $ScrollContainer/MarginContainer/VBoxContainer/Status
-@onready var account_box: VBoxContainer = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox
-@onready var account_select: OptionButton = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountSelectRow/AccountSelect
-@onready var select_account_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountSelectRow/SelectAccountButton
-@onready var account_name_input: LineEdit = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountCreateRow/AccountNameInput
-@onready var create_account_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountCreateRow/CreateAccountButton
-@onready var character_box: VBoxContainer = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox
-@onready var name_input: LineEdit = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow/NameInput
-@onready var character_select: OptionButton = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow/CharacterSelect
-@onready var select_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow/SelectButton
-@onready var delete_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow/DeleteButton
-@onready var create_harvester_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateHarvesterButton
-@onready var create_fighter_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateFighterButton
 @onready var map_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/MapButton
 @onready var primary_action_bar: Control = $ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/PrimaryActionBar
 @onready var inventory_panel: Control = $InventoryPanel
@@ -23,22 +11,38 @@ extends Control
 @onready var town_panel: Control = $TownPanel
 @onready var zone_panel: Control = $ZonePanel
 @onready var node_panel: Control = $NodePanel
+@onready var account_panel: Control = $AccountPanel
 
 var _inventory_skills_controller
 var _town_controller
+var _account_controller
 var _log_lines: Array = []
 
 func _ready():
 	_setup_controllers()
 	_connect_buttons()
 	_append_log("Pick or create an account to begin.")
-	_refresh_account_selector()
-	_refresh_character_selector()
+	if _account_controller:
+		_account_controller.refresh_lists()
+		_account_controller.sync_visibility()
 	_refresh_status()
 	_refresh_visibility()
 	_refresh_open_panels()
 
 func _setup_controllers():
+	_account_controller = preload("res://scenes/AccountController.gd").new()
+	add_child(_account_controller)
+	_account_controller.init(
+		account_panel,
+		func(lines):
+			if lines is Array:
+				_append_logs(lines)
+			else:
+				_append_logs([lines]),
+		func(): _refresh_status(),
+		func(): _refresh_open_panels()
+	)
+
 	_inventory_skills_controller = preload("res://scenes/InventorySkillsController.gd").new()
 	add_child(_inventory_skills_controller)
 	_inventory_skills_controller.init(
@@ -75,12 +79,6 @@ func _process(delta):
 		_refresh_open_panels()
 
 func _connect_buttons():
-	create_account_button.pressed.connect(_on_create_account_pressed)
-	select_account_button.pressed.connect(_on_select_account_pressed)
-	create_harvester_button.pressed.connect(_on_create_harvester_pressed)
-	create_fighter_button.pressed.connect(_on_create_fighter_pressed)
-	select_button.pressed.connect(_on_select_pressed)
-	delete_button.pressed.connect(_on_delete_pressed)
 	map_button.pressed.connect(_on_map_pressed)
 	if primary_action_bar.has_signal("open_inventory"):
 		primary_action_bar.open_inventory.connect(_on_inventory_pressed)
@@ -116,61 +114,6 @@ func _connect_buttons():
 		if sub != "":
 			_open_zone_panel(sub)
 	)
-
-func _on_create_account_pressed():
-	var name = account_name_input.text
-	_append_logs(GameState.create_account(name))
-	account_name_input.text = ""
-	_refresh_account_selector()
-	_refresh_visibility()
-	_refresh_status()
-
-func _on_select_account_pressed():
-	if account_select.disabled:
-		_append_log("No accounts to select. Create one first.")
-		return
-	var name = account_select.get_item_text(account_select.selected)
-	_append_logs(GameState.select_account(name))
-	_refresh_character_selector()
-	_refresh_visibility()
-	_refresh_status()
-	_refresh_open_panels()
-
-func _on_create_harvester_pressed():
-	_append_logs(GameState.create_character(name_input.text, "harvester"))
-	name_input.text = ""
-	_refresh_character_selector()
-	_refresh_visibility()
-	_refresh_status()
-	_refresh_open_panels()
-
-func _on_create_fighter_pressed():
-	_append_logs(GameState.create_character(name_input.text, "fighter"))
-	name_input.text = ""
-	_refresh_character_selector()
-	_refresh_visibility()
-	_refresh_status()
-	_refresh_open_panels()
-
-func _on_select_pressed():
-	if character_select.disabled:
-		_append_log("No characters to select. Create one first.")
-		return
-	var name = character_select.get_item_text(character_select.selected)
-	_append_logs(GameState.select_character_by_name(name))
-	_refresh_visibility()
-	_refresh_status()
-
-func _on_delete_pressed():
-	if character_select.disabled:
-		_append_log("No characters to delete.")
-		return
-	var name = character_select.get_item_text(character_select.selected)
-	_append_logs(GameState.delete_character(name))
-	_refresh_character_selector()
-	_refresh_visibility()
-	_refresh_status()
-	_refresh_open_panels()
 
 func _on_harvest_pressed():
 	_append_logs(GameState.act_in_current_node("harvest"))
@@ -303,18 +246,6 @@ func _refresh_status():
 		_inventory_skills_controller.refresh_if_visible()
 	_refresh_open_panels()
 
-func _refresh_character_selector():
-	character_select.clear()
-	var names = GameState.get_character_names()
-	for i in range(names.size()):
-		character_select.add_item(names[i], i)
-	if names.size() > 0:
-		character_select.select(0)
-	else:
-		character_select.add_item("No characters", -1)
-		character_select.select(0)
-	character_select.disabled = names.size() == 0
-
 func _refresh_map_panel():
 	if map_panel.has_method("set_enabled"):
 		map_panel.set_enabled(GameState.has_active_character())
@@ -371,6 +302,9 @@ func _hide_sub_panels():
 
 func _refresh_open_panels():
 	var has_character = GameState.has_active_character()
+	if _account_controller:
+		_account_controller.refresh_lists()
+		_account_controller.sync_visibility()
 	if primary_action_bar.has_method("set_enabled"):
 		primary_action_bar.set_enabled(has_character)
 	if map_panel.has_method("set_enabled"):
@@ -416,21 +350,9 @@ func _refresh_open_panels():
 	if node_panel.visible:
 		_refresh_log_outputs()
 
-func _refresh_account_selector():
-	account_select.clear()
-	var accounts = GameState.list_accounts()
-	for i in range(accounts.size()):
-		account_select.add_item(accounts[i], i)
-	if accounts.size() > 0:
-		account_select.select(0)
-	else:
-		account_select.add_item("No accounts", -1)
-		account_select.select(0)
-	account_select.disabled = accounts.size() == 0
-
 func _refresh_visibility():
-	account_box.visible = not GameState.has_account_selected()
-	character_box.visible = GameState.has_account_selected() and not GameState.has_active_character()
+	if _account_controller:
+		_account_controller.sync_visibility()
 	if not GameState.has_active_character():
 		inventory_panel.visible = false
 		skills_panel.visible = false
