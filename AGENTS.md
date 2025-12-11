@@ -1,28 +1,43 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- Root contains `project.godot` (Godot 4.5 mobile profile) and the default `icon.svg`; `.godot/` is editor/import cache and stays untracked per `.gitignore`.
-- Avoid committing `/android/` export outputs; keep keystores and signing configs local.
-- Add source assets under `assets/`, scenes under `scenes/`, and scripts under `scripts/` (create the folders if missing). Place reusable shaders or materials in `materials/` to keep imports tidy.
-- Reference assets with `res://` paths so they remain valid across platforms.
+## Project Structure
+- Main scene: `scenes/Main.tscn` (text harness). Gameplay runs via full-screen overlays:
+  - `MapPanel`, `TownPanel`, `ZonePanel`, `NodePanel` (navigation and actions)
+  - `InventoryPanel`, `SkillsPanel`, `AccountPanel` (management overlays)
+  - Shared UI pieces: `ActionBar` (Inventory/Skills/Save) and `InfoBox` (scrollable log/info)
+- Core logic: `scripts/systems` (`game_state.gd`, `save_system.gd`, `encounter_system.gd`, `crafting_system.gd`)
+- Data: `data/` (skills, items, maps, recipes)
+- Models: `scripts/core/` (character, stats, skills, inventory, item_data, map_node, recipe, account)
+- User data: `userdata/<account>/<character>.json` + `sharedstash.json` (also in `user://userdata`); `nuke.sh` wipes both.
 
-## Build, Test, and Development Commands
-- `godot4 --editor project.godot` — open the project with current settings.
-- `godot4 --path . --run` — run the configured main scene (set in Project Settings → Run → Main Scene).
-- After an export preset exists, `godot4 --path . --export-release android build.apk` — produce an Android package via CLI; presets and keystore paths must be configured in the editor first.
-- Store export presets in version control; keep secrets out of the repo and inject them via env vars or local files.
+## Build / Run
+- Run: `godot4 --path . --run`
+- Save/Exit is in the UI (`ActionBar`); autosaves on quit. `nuke.sh` clears saves for a fresh state.
 
-## Coding Style & Naming Conventions
-- GDScript defaults: 4-space indent, UTF-8, one class per file. Prefer snake_case for variables/functions/signals and PascalCase for scene files and node classes.
-- Name root nodes after purpose (`Main`, `HUD`); suffix UI scenes with `*UI.tscn` for clarity.
-- Keep scripts near their scenes; favor `_ready` for setup and limit per-frame work to `_process`/`_physics_process` only when needed.
-- Use the Godot editor formatter (`Ctrl+Alt+L`) before committing to normalize spacing and imports.
+## UI & Controllers
+- Overlays are full-screen, opaque `Control` scenes with a ColorRect background. All input should be captured; avoid translucency.
+- Panels emit intent signals only; wiring belongs in controllers, not in panel scripts.
+- Controllers in use:
+  - `AccountController` + `AccountPanel` for account/character create/select/delete.
+  - `InventorySkillsController` for inventory/skills open/refresh, equip/unequip, save/exit.
+  - `TownController` for town intents (rest/craft/map/inventory/skills/save).
+- Reusable components: `ActionBar` (Inventory/Skills/Save) and `InfoBox` (log/info, scrollable).
+- Keep Main.gd thin: bootstrap controllers, logging, status refresh, map/zone/node wiring until migrated.
 
-## Testing Guidelines
-- No automated test harness is present; smoke-test interactively via the editor (F5) or `godot4 --path . --run` before pushing.
-- Document manual test steps in PR descriptions. For logic-heavy modules, add a Godot unit test plugin (e.g., GUT/WAT) before merging to keep regressions low.
+## Gameplay Data & Rules
+- Skills registry: `data/skills.gd` (combat: swordsmanship/archery/unarmed; harvest: fishing/mining/woodcutting/foraging/hunting; craft: crafting).
+- Items: `data/items.gd` with types (weapon/hat/armor/projectile/material/consumable), optional `slot` and `skill` (for combat XP routing).
+- Travel: submap entry cost (10). Node travel uses zone-specific per-step cost (lake/forest=2, mountain=3) * abs(node distance); returning to town costs energy. Town has no nodes.
+- Actions: node actions consume node energy; harvest XP by submap (harvest.*); combat XP by equipped weapon skill or unarmed if no weapon.
+- Starter kit: swordsmanship 1, rusty + wooden sword, leather hat/armor, 100 camping supplies.
 
-## Commit & Pull Request Guidelines
-- History is small; follow Conventional Commits (`feat:`, `fix:`, `chore:`) with short, imperative subjects.
-- PRs should include: concise summary, linked issue/task, screenshots or recordings for visual/UI changes, and notes on manual tests performed.
-- Keep diffs free of `.godot/` cache, `/android/` exports, and other generated artifacts.
+## Coding Practices
+- Use controllers to mediate between UI signals and systems; panels should stay dumb/presentational.
+- Keep overlays full-screen, opaque; anchor all to viewport (Layout → Full Rect).
+- Prefer `rg` for searches; avoid destructive git commands unless asked.
+- Keep comments minimal and purposeful; default to ASCII.
+- Persist new logic under `scripts/` or `data/`; avoid embedding rules in UI scenes.
+
+## Testing & Debug
+- Use `nuke.sh` to clear `res://userdata` and `user://userdata` between runs when needed.
+- Validate flows: account/character selection, map → zone → node travel, inventory equip/unequip, skills display, rest/craft, save & exit.
