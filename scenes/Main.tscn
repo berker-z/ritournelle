@@ -1,0 +1,147 @@
+[gd_scene load_steps=2 format=3 uid="uid://c54ne36dr70pf"]
+
+[ext_resource type="Script" uid="uid://b021djhgcubdx" path="res://scenes/Main.gd" id="1"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Title" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Ritournelle Text Harness"
+horizontal_alignment = 1
+
+[node name="AccountBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AccountLabel" type="Label" parent="MarginContainer/VBoxContainer/AccountBox"]
+layout_mode = 2
+text = "Account"
+
+[node name="AccountSelectRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/AccountBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AccountSelect" type="OptionButton" parent="MarginContainer/VBoxContainer/AccountBox/AccountSelectRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SelectAccountButton" type="Button" parent="MarginContainer/VBoxContainer/AccountBox/AccountSelectRow"]
+layout_mode = 2
+text = "Select Account"
+
+[node name="AccountCreateRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/AccountBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AccountNameInput" type="LineEdit" parent="MarginContainer/VBoxContainer/AccountBox/AccountCreateRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "New account name"
+
+[node name="CreateAccountButton" type="Button" parent="MarginContainer/VBoxContainer/AccountBox/AccountCreateRow"]
+layout_mode = 2
+text = "Create Account"
+
+[node name="CharacterBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CharacterLabel" type="Label" parent="MarginContainer/VBoxContainer/CharacterBox"]
+layout_mode = 2
+text = "Character"
+
+[node name="CharacterNameRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/CharacterBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLabel" type="Label" parent="MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow"]
+layout_mode = 2
+text = "Name"
+
+[node name="NameInput" type="LineEdit" parent="MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Enter character name"
+
+[node name="CreateRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/CharacterBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CreateHarvesterButton" type="Button" parent="MarginContainer/VBoxContainer/CharacterBox/CreateRow"]
+layout_mode = 2
+text = "Create Harvester"
+
+[node name="CreateFighterButton" type="Button" parent="MarginContainer/VBoxContainer/CharacterBox/CreateRow"]
+layout_mode = 2
+text = "Create Fighter"
+
+[node name="ManageRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/CharacterBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CharacterSelect" type="OptionButton" parent="MarginContainer/VBoxContainer/CharacterBox/ManageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SelectButton" type="Button" parent="MarginContainer/VBoxContainer/CharacterBox/ManageRow"]
+layout_mode = 2
+text = "Select"
+
+[node name="DeleteButton" type="Button" parent="MarginContainer/VBoxContainer/CharacterBox/ManageRow"]
+layout_mode = 2
+text = "Delete"
+
+[node name="Log" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 220)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+focus_mode = 2
+selection_enabled = true
+
+[node name="Actions" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HarvestButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Harvest (meadow)"
+
+[node name="CombatButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Combat (camp)"
+
+[node name="CraftButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Craft (plank)"
+
+[node name="RestButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Rest"
+
+[node name="SaveExitButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Save & Exit"
+
+[node name="Status" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+text = "Status..."
+vertical_alignment = 1
+autowrap_mode = 2

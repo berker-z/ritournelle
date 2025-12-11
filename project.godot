@@ -1,0 +1,40 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Ritournelle"
+config/features=PackedStringArray("4.5", "Mobile")
+config/icon="res://icon.svg"
+run/main_scene="res://scenes/Main.tscn"
+
+[autoload]
+
+SaveSystem="*res://scripts/systems/save_system.gd"
+GameState="*res://scripts/systems/game_state.gd"
+EncounterSystem="*res://scripts/systems/encounter_system.gd"
+CraftingSystem="*res://scripts/systems/crafting_system.gd"
+
+[display]
+
+window/handheld/orientation=5
+window/canvas_textures/default_texture_filter=1
+window/android/enable_pan_and_scale_gestures=false
+window/emulate_touch_from_mouse=false
+
+[input_devices]
+
+pointing/android/enable_pan_and_scale_gestures=true
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="mobile"
