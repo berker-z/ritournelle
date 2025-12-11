@@ -68,10 +68,10 @@ func ensure_account(account_name: String):
 		DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(account_dir(account_name, base_dir)))
 
 func create_account(raw_name: String) -> String:
-	var cleaned = sanitize_name(raw_name, "account")
-	ensure_account(cleaned)
-	_save_stash_all(cleaned, Inventory.new())
-	return cleaned
+	var cleaned_name = sanitize_name(raw_name, "account")
+	ensure_account(cleaned_name)
+	_save_stash_all(cleaned_name, Inventory.new())
+	return cleaned_name
 
 func list_characters(account_name: String) -> Array:
 	var names: Array = []
@@ -156,7 +156,7 @@ func _save_stash_all(account_name: String, stash: Inventory) -> bool:
 func load_shared_stash(account_name: String) -> Inventory:
 	return _load_stash(account_name, _first_existing_base_dir())
 
-func _load_stash(account_name: String, base_dir: String) -> Inventory:
+func _load_stash(account_name: String, _base_dir_unused: String) -> Inventory:
 	for dir in _base_dirs():
 		var path = "%s/%s" % [account_dir(account_name, dir), STASH_FILE]
 		if FileAccess.file_exists(path):

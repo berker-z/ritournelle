@@ -1,40 +1,27 @@
 extends Control
 
-@onready var log_label: RichTextLabel = $MarginContainer/VBoxContainer/Log
-@onready var status_label: Label = $MarginContainer/VBoxContainer/Status
-@onready var account_box: VBoxContainer = $MarginContainer/VBoxContainer/AccountBox
-@onready var account_select: OptionButton = $MarginContainer/VBoxContainer/AccountBox/AccountSelectRow/AccountSelect
-@onready var select_account_button: Button = $MarginContainer/VBoxContainer/AccountBox/AccountSelectRow/SelectAccountButton
-@onready var account_name_input: LineEdit = $MarginContainer/VBoxContainer/AccountBox/AccountCreateRow/AccountNameInput
-@onready var create_account_button: Button = $MarginContainer/VBoxContainer/AccountBox/AccountCreateRow/CreateAccountButton
-@onready var character_box: VBoxContainer = $MarginContainer/VBoxContainer/CharacterBox
-@onready var name_input: LineEdit = $MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow/NameInput
-@onready var character_select: OptionButton = $MarginContainer/VBoxContainer/CharacterBox/ManageRow/CharacterSelect
-@onready var select_button: Button = $MarginContainer/VBoxContainer/CharacterBox/ManageRow/SelectButton
-@onready var delete_button: Button = $MarginContainer/VBoxContainer/CharacterBox/ManageRow/DeleteButton
-@onready var create_harvester_button: Button = $MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateHarvesterButton
-@onready var create_fighter_button: Button = $MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateFighterButton
-@onready var travel_box: VBoxContainer = $MarginContainer/VBoxContainer/TravelBox
-@onready var submap_select: OptionButton = $MarginContainer/VBoxContainer/TravelBox/SubmapRow/SubmapSelect
-@onready var node_select: OptionButton = $MarginContainer/VBoxContainer/TravelBox/NodeRow/NodeSelect
-@onready var travel_button: Button = $MarginContainer/VBoxContainer/TravelBox/SubmapRow/TravelButton
-@onready var move_node_button: Button = $MarginContainer/VBoxContainer/TravelBox/NodeRow/MoveNodeButton
-@onready var harvest_button: Button = $MarginContainer/VBoxContainer/Actions/HarvestButton
-@onready var combat_button: Button = $MarginContainer/VBoxContainer/Actions/CombatButton
-@onready var return_button: Button = $MarginContainer/VBoxContainer/Actions/ReturnButton
-@onready var inventory_button: Button = $MarginContainer/VBoxContainer/Actions/InventoryButton
-@onready var skills_button: Button = $MarginContainer/VBoxContainer/Actions/SkillsButton
-@onready var craft_button: Button = $MarginContainer/VBoxContainer/Actions/CraftButton
-@onready var rest_button: Button = $MarginContainer/VBoxContainer/Actions/RestButton
-@onready var save_exit_button: Button = $MarginContainer/VBoxContainer/Actions/SaveExitButton
+@onready var log_box: Control = $ScrollContainer/MarginContainer/VBoxContainer/LogBox
+@onready var status_label: Label = $ScrollContainer/MarginContainer/VBoxContainer/Status
+@onready var account_box: VBoxContainer = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox
+@onready var account_select: OptionButton = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountSelectRow/AccountSelect
+@onready var select_account_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountSelectRow/SelectAccountButton
+@onready var account_name_input: LineEdit = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountCreateRow/AccountNameInput
+@onready var create_account_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/AccountBox/AccountCreateRow/CreateAccountButton
+@onready var character_box: VBoxContainer = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox
+@onready var name_input: LineEdit = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CharacterNameRow/NameInput
+@onready var character_select: OptionButton = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow/CharacterSelect
+@onready var select_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow/SelectButton
+@onready var delete_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/ManageRow/DeleteButton
+@onready var create_harvester_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateHarvesterButton
+@onready var create_fighter_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateFighterButton
+@onready var map_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/MapButton
+@onready var primary_action_bar: Control = $ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/PrimaryActionBar
 @onready var inventory_panel: Control = $InventoryPanel
-@onready var inventory_equipped_list: ItemList = $InventoryPanel/Panel/MarginContainer/VBoxContainer/EquippedList
-@onready var inventory_equipment_list: ItemList = $InventoryPanel/Panel/MarginContainer/VBoxContainer/EquipmentList
-@onready var inventory_items_list: ItemList = $InventoryPanel/Panel/MarginContainer/VBoxContainer/ItemsList
-@onready var close_inventory_button: Button = $InventoryPanel/Panel/MarginContainer/VBoxContainer/InventoryHeader/CloseInventoryButton
 @onready var skills_panel: Control = $SkillsPanel
-@onready var skills_list: ItemList = $SkillsPanel/Panel/MarginContainer/VBoxContainer/SkillsList
-@onready var close_skills_button: Button = $SkillsPanel/Panel/MarginContainer/VBoxContainer/SkillsHeader/CloseSkillsButton
+@onready var map_panel: Control = $MapPanel
+@onready var town_panel: Control = $TownPanel
+@onready var zone_panel: Control = $ZonePanel
+@onready var node_panel: Control = $NodePanel
 
 var _log_lines: Array = []
 
@@ -43,15 +30,16 @@ func _ready():
 	_append_log("Pick or create an account to begin.")
 	_refresh_account_selector()
 	_refresh_character_selector()
-	_refresh_map_selectors()
 	_refresh_status()
 	_refresh_visibility()
+	_refresh_open_panels()
 
 func _process(delta):
 	var updates = GameState.tick(delta)
 	if updates.size() > 0:
 		_append_logs(updates)
 		_refresh_status()
+		_refresh_open_panels()
 
 func _connect_buttons():
 	create_account_button.pressed.connect(_on_create_account_pressed)
@@ -60,21 +48,49 @@ func _connect_buttons():
 	create_fighter_button.pressed.connect(_on_create_fighter_pressed)
 	select_button.pressed.connect(_on_select_pressed)
 	delete_button.pressed.connect(_on_delete_pressed)
-	travel_button.pressed.connect(_on_travel_pressed)
-	submap_select.item_selected.connect(_on_submap_selected)
-	move_node_button.pressed.connect(_on_move_node_pressed)
-	harvest_button.pressed.connect(_on_harvest_pressed)
-	combat_button.pressed.connect(_on_combat_pressed)
-	return_button.pressed.connect(_on_return_pressed)
-	inventory_button.pressed.connect(_on_inventory_pressed)
-	skills_button.pressed.connect(_on_skills_pressed)
-	craft_button.pressed.connect(_on_craft_pressed)
-	rest_button.pressed.connect(_on_rest_pressed)
-	save_exit_button.pressed.connect(_on_save_exit_pressed)
-	close_inventory_button.pressed.connect(_on_close_inventory_pressed)
-	close_skills_button.pressed.connect(_on_close_skills_pressed)
-	inventory_equipped_list.item_selected.connect(_on_equipped_item_selected)
-	inventory_equipment_list.item_selected.connect(_on_inventory_item_selected)
+	map_button.pressed.connect(_on_map_pressed)
+	if primary_action_bar.has_signal("open_inventory"):
+		primary_action_bar.open_inventory.connect(_on_inventory_pressed)
+		primary_action_bar.open_skills.connect(_on_skills_pressed)
+		primary_action_bar.save_exit.connect(_on_save_exit_pressed)
+	inventory_panel.equip_item.connect(_on_inventory_panel_equip)
+	inventory_panel.unequip_slot.connect(_on_inventory_panel_unequip)
+	map_panel.select_zone.connect(_on_map_zone_selected)
+	map_panel.close_requested.connect(func(): map_panel.visible = false)
+	map_panel.open_inventory.connect(_on_inventory_pressed)
+	map_panel.open_skills.connect(_on_skills_pressed)
+	map_panel.save_exit.connect(_on_save_exit_pressed)
+	town_panel.rest_pressed.connect(_on_rest_pressed)
+	town_panel.craft_pressed.connect(_on_craft_pressed)
+	town_panel.open_map.connect(_on_map_pressed)
+	town_panel.open_inventory.connect(_on_inventory_pressed)
+	town_panel.open_skills.connect(_on_skills_pressed)
+	town_panel.save_exit.connect(_on_save_exit_pressed)
+	town_panel.close_requested.connect(func(): town_panel.visible = false)
+	zone_panel.move_to_node.connect(_on_move_to_node_requested)
+	zone_panel.rest_pressed.connect(_on_rest_pressed)
+	zone_panel.craft_pressed.connect(_on_craft_pressed)
+	zone_panel.open_map.connect(_on_map_pressed)
+	zone_panel.open_inventory.connect(_on_inventory_pressed)
+	zone_panel.open_skills.connect(_on_skills_pressed)
+	zone_panel.save_exit.connect(_on_save_exit_pressed)
+	zone_panel.close_requested.connect(func(): zone_panel.visible = false)
+	node_panel.rest_pressed.connect(_on_rest_pressed)
+	node_panel.craft_pressed.connect(_on_craft_pressed)
+	node_panel.return_pressed.connect(_on_return_pressed)
+	node_panel.harvest_pressed.connect(_on_harvest_pressed)
+	node_panel.combat_pressed.connect(_on_combat_pressed)
+	node_panel.open_map.connect(_on_map_pressed)
+	node_panel.open_zone.connect(_on_open_zone_from_node)
+	node_panel.open_inventory.connect(_on_inventory_pressed)
+	node_panel.open_skills.connect(_on_skills_pressed)
+	node_panel.save_exit.connect(_on_save_exit_pressed)
+	node_panel.close_requested.connect(func():
+		node_panel.visible = false
+		var sub = GameState.get_current_submap()
+		if sub != "":
+			_open_zone_panel(sub)
+	)
 
 func _on_create_account_pressed():
 	var name = account_name_input.text
@@ -91,25 +107,25 @@ func _on_select_account_pressed():
 	var name = account_select.get_item_text(account_select.selected)
 	_append_logs(GameState.select_account(name))
 	_refresh_character_selector()
-	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
+	_refresh_open_panels()
 
 func _on_create_harvester_pressed():
 	_append_logs(GameState.create_character(name_input.text, "harvester"))
 	name_input.text = ""
 	_refresh_character_selector()
-	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
+	_refresh_open_panels()
 
 func _on_create_fighter_pressed():
 	_append_logs(GameState.create_character(name_input.text, "fighter"))
 	name_input.text = ""
 	_refresh_character_selector()
-	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
+	_refresh_open_panels()
 
 func _on_select_pressed():
 	if character_select.disabled:
@@ -127,60 +143,91 @@ func _on_delete_pressed():
 	var name = character_select.get_item_text(character_select.selected)
 	_append_logs(GameState.delete_character(name))
 	_refresh_character_selector()
-	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
-
-func _on_submap_selected(index):
-	_refresh_node_selector()
-
-func _on_travel_pressed():
-	var submap = submap_select.get_item_text(submap_select.selected)
-	_append_logs(GameState.travel_to_submap(submap))
-	_refresh_node_selector()
-	_refresh_status()
-
-func _on_move_node_pressed():
-	var submap = submap_select.get_item_text(submap_select.selected)
-	var node_id = node_select.get_item_text(node_select.selected)
-	_append_logs(GameState.move_to_node(submap, node_id))
-	_refresh_node_selector()
-	_refresh_status()
+	_refresh_open_panels()
 
 func _on_harvest_pressed():
 	_append_logs(GameState.act_in_current_node("harvest"))
 	_refresh_status()
+	_refresh_open_panels()
 
 func _on_combat_pressed():
 	_append_logs(GameState.act_in_current_node("combat"))
 	_refresh_status()
+	_refresh_open_panels()
 
 func _on_return_pressed():
 	_append_logs(GameState.return_to_town())
-	_refresh_node_selector()
 	_refresh_status()
+	_refresh_open_panels()
+	if GameState.get_current_submap() == "town":
+		_open_town_panel()
 
 func _on_inventory_pressed():
 	if not GameState.has_active_character():
 		_append_log("No active character.")
 		return
-	inventory_panel.visible = true
 	_refresh_inventory_panel()
+	inventory_panel.visible = true
 
 func _on_skills_pressed():
 	if not GameState.has_active_character():
 		_append_log("No active character.")
 		return
-	skills_panel.visible = true
 	_refresh_skills_panel()
+	skills_panel.visible = true
 
 func _on_craft_pressed():
 	_append_logs(GameState.start_craft("plank"))
 	_refresh_status()
+	_refresh_open_panels()
 
 func _on_rest_pressed():
 	_append_logs(GameState.rest())
 	_refresh_status()
+	_refresh_open_panels()
+
+func _on_map_pressed():
+	if not GameState.has_active_character():
+		_append_log("No active character.")
+		return
+	_hide_sub_panels()
+	_refresh_map_panel()
+	map_panel.visible = true
+	node_panel.visible = false
+
+func _on_map_zone_selected(submap: String):
+	if not GameState.has_active_character():
+		_append_log("No active character.")
+		return
+	_append_logs(GameState.travel_to_submap(submap))
+	_refresh_status()
+	_refresh_open_panels()
+	map_panel.visible = false
+	var current_submap = GameState.get_current_submap()
+	if current_submap == "town":
+		_open_town_panel()
+	elif current_submap != "":
+		_open_zone_panel(current_submap)
+	var current_node = GameState.get_current_node()
+	if current_node != "":
+		_open_node_panel(current_submap, current_node)
+
+func _on_open_zone_from_node():
+	var submap = GameState.get_current_submap()
+	if submap == "":
+		return
+	_open_zone_panel(submap)
+
+func _on_move_to_node_requested(submap: String, node_id: String):
+	_append_logs(GameState.move_to_node(submap, node_id))
+	_refresh_status()
+	_refresh_open_panels()
+	var current_submap = GameState.get_current_submap()
+	var current_node = GameState.get_current_node()
+	if current_submap == submap and current_node == node_id:
+		_open_node_panel(submap, node_id)
 
 func _on_save_exit_pressed():
 	if GameState.has_active_character():
@@ -188,27 +235,13 @@ func _on_save_exit_pressed():
 	_append_log("Saved. Exiting.")
 	get_tree().quit()
 
-func _on_close_inventory_pressed():
-	inventory_panel.visible = false
-
-func _on_close_skills_pressed():
-	skills_panel.visible = false
-
-func _on_equipped_item_selected(index: int):
-	var data = inventory_equipped_list.get_item_metadata(index)
-	var slot = data.get("slot", "")
-	if slot == "":
-		return
-	_append_logs(GameState.unequip(slot))
+func _on_inventory_panel_equip(item_id: String):
+	_append_logs(GameState.equip_item(item_id))
 	_refresh_inventory_panel()
 	_refresh_status()
 
-func _on_inventory_item_selected(index: int):
-	var data = inventory_equipment_list.get_item_metadata(index)
-	var item_id = data.get("item_id", "")
-	if item_id == "":
-		return
-	_append_logs(GameState.equip_item(item_id))
+func _on_inventory_panel_unequip(slot: String):
+	_append_logs(GameState.unequip(slot))
 	_refresh_inventory_panel()
 	_refresh_status()
 
@@ -216,49 +249,42 @@ func _append_log(line: String):
 	_log_lines.append(line)
 	if _log_lines.size() > 50:
 		_log_lines.remove_at(0)
-	log_label.text = "\n".join(_log_lines)
-	log_label.scroll_to_line(log_label.get_line_count())
+	_refresh_log_outputs()
 
 func _append_logs(lines: Array):
 	for line in lines:
 		_append_log(str(line))
 
+func _refresh_log_outputs():
+	if log_box != null and log_box.has_method("set_lines"):
+		log_box.set_lines(_log_lines)
+		if log_box.has_method("scroll_to_end"):
+			log_box.scroll_to_end()
+	if node_panel != null and node_panel.has_method("set_log_lines"):
+		node_panel.set_log_lines(_log_lines)
+
 func _refresh_inventory_panel():
-	inventory_equipped_list.clear()
-	inventory_equipment_list.clear()
-	inventory_items_list.clear()
 	var equipped_entries = GameState.get_equipped_entries()
-	equipped_entries.sort_custom(func(a, b): return a.get("slot", "") < b.get("slot", ""))
-	for entry in equipped_entries:
-		var slot: String = entry.get("slot", "").capitalize()
-		var item_id: String = entry.get("item_id", "")
-		var name: String = entry.get("name", "")
-		var label = "%s: %s" % [slot, name if name != "" else "(empty)"]
-		var idx = inventory_equipped_list.add_item(label)
-		inventory_equipped_list.set_item_metadata(idx, entry)
 	var equipment_entries = GameState.get_equipment_inventory_entries()
-	for entry in equipment_entries:
-		var label = "%s x%d" % [entry.get("name", entry.get("item_id", "")), int(entry.get("count", 0))]
-		var slot_tag = entry.get("slot", "")
-		if slot_tag != "":
-			label += " [%s]" % slot_tag
-		var idx = inventory_equipment_list.add_item(label)
-		inventory_equipment_list.set_item_metadata(idx, entry)
 	var item_entries = GameState.get_item_inventory_entries()
-	for entry in item_entries:
-		var label = "%s x%d" % [entry.get("name", entry.get("item_id", "")), int(entry.get("count", 0))]
-		inventory_items_list.add_item(label)
+	inventory_panel.refresh(equipped_entries, equipment_entries, item_entries)
 
 func _refresh_skills_panel():
-	skills_list.clear()
 	if not GameState.has_active_character():
 		return
+	skills_panel.refresh(_get_skill_lines())
+
+func _get_skill_lines() -> Array:
+	var lines: Array = []
+	if not GameState.has_active_character():
+		return lines
 	var p = GameState.player
 	var ids: Array = p.skills.keys()
 	ids.sort()
 	for id in ids:
 		var skill = p.skills[id]
-		skills_list.add_item("%s - Lv%d (%.1f/%.1f)" % [id, skill.level, skill.xp, skill.xp_to_next])
+		lines.append("%s - Lv%d (%.1f/%.1f)" % [id, skill.level, skill.xp, skill.xp_to_next])
+	return lines
 
 func _refresh_status():
 	var p = GameState.player
@@ -285,6 +311,7 @@ func _refresh_status():
 		_refresh_inventory_panel()
 	if skills_panel.visible:
 		_refresh_skills_panel()
+	_refresh_open_panels()
 
 func _refresh_character_selector():
 	character_select.clear()
@@ -298,41 +325,106 @@ func _refresh_character_selector():
 		character_select.select(0)
 	character_select.disabled = names.size() == 0
 
-func _refresh_map_selectors():
-	submap_select.clear()
-	var maps = GameState.list_submaps()
-	for i in range(maps.size()):
-		submap_select.add_item(maps[i], i)
-	if maps.size() > 0:
-		submap_select.select(0)
-		submap_select.disabled = false
-	else:
-		submap_select.add_item("No maps", -1)
-		submap_select.select(0)
-		submap_select.disabled = true
-	_refresh_node_selector()
+func _refresh_map_panel():
+	if map_panel.has_method("set_enabled"):
+		map_panel.set_enabled(GameState.has_active_character())
+	if map_panel.has_method("refresh"):
+		map_panel.refresh(GameState.get_location_text())
 
-func _refresh_node_selector():
-	node_select.clear()
-	if submap_select.disabled:
-		node_select.add_item("Travel to a submap first", -1)
-		node_select.select(0)
-		node_select.disabled = true
-		move_node_button.disabled = true
+func _open_town_panel():
+	if not GameState.has_active_character():
 		return
-	var submap = submap_select.get_item_text(submap_select.selected)
+	_hide_sub_panels()
+	if town_panel.has_method("set_enabled"):
+		town_panel.set_enabled(true)
+	if town_panel.has_method("refresh"):
+		town_panel.refresh("Location: %s" % GameState.get_location_text())
+	town_panel.visible = true
+
+func _open_zone_panel(submap: String):
+	if not GameState.has_active_character():
+		return
+	if submap == "town":
+		_open_town_panel()
+		return
+	_hide_sub_panels()
 	var nodes = GameState.list_nodes(submap)
-	for i in range(nodes.size()):
-		node_select.add_item(nodes[i], i)
-	if nodes.size() > 0:
-		node_select.select(0)
-		node_select.disabled = false
-		move_node_button.disabled = false
-	else:
-		node_select.add_item("No nodes", -1)
-		node_select.select(0)
-		node_select.disabled = true
-		move_node_button.disabled = true
+	var current_node = GameState.get_current_node()
+	if zone_panel.has_method("set_enabled"):
+		zone_panel.set_enabled(true)
+	if zone_panel.has_method("refresh"):
+		var info = "Location: %s" % GameState.get_location_text()
+		zone_panel.refresh(submap, nodes, current_node, info)
+	zone_panel.visible = true
+	node_panel.visible = false
+
+func _open_node_panel(submap: String, node_id: String):
+	if not GameState.has_active_character():
+		return
+	if node_id == "":
+		return
+	_hide_sub_panels()
+	if node_panel.has_method("set_enabled"):
+		node_panel.set_enabled(true)
+	if node_panel.has_method("refresh"):
+		var info = "Location: %s" % GameState.get_location_text()
+		node_panel.refresh(submap, node_id, info)
+	node_panel.visible = true
+	zone_panel.visible = false
+	_refresh_log_outputs()
+
+func _hide_sub_panels():
+	map_panel.visible = false
+	town_panel.visible = false
+	zone_panel.visible = false
+	node_panel.visible = false
+
+func _refresh_open_panels():
+	var has_character = GameState.has_active_character()
+	if primary_action_bar.has_method("set_enabled"):
+		primary_action_bar.set_enabled(has_character)
+	if map_panel.has_method("set_enabled"):
+		map_panel.set_enabled(has_character)
+	if town_panel.has_method("set_enabled"):
+		town_panel.set_enabled(has_character)
+	if zone_panel.has_method("set_enabled"):
+		zone_panel.set_enabled(has_character)
+	if node_panel.has_method("set_enabled"):
+		node_panel.set_enabled(has_character)
+	if not has_character:
+		_hide_sub_panels()
+	if map_panel.visible:
+		_refresh_map_panel()
+	if town_panel.visible:
+		if has_character and town_panel.has_method("refresh"):
+			town_panel.refresh("Location: %s" % GameState.get_location_text())
+		else:
+			town_panel.visible = false
+	if zone_panel.visible:
+		if not has_character:
+			zone_panel.visible = false
+		else:
+			var current_submap = GameState.get_current_submap()
+			if current_submap == "town":
+				_open_town_panel()
+			elif current_submap != "" and zone_panel.has_method("refresh"):
+				var nodes = GameState.list_nodes(current_submap)
+				var current_node = GameState.get_current_node()
+				var info = "Location: %s" % GameState.get_location_text()
+				zone_panel.refresh(current_submap, nodes, current_node, info)
+	if node_panel.visible:
+		if not has_character:
+			node_panel.visible = false
+		else:
+			var current_submap_node = GameState.get_current_submap()
+			var current_node_id = GameState.get_current_node()
+			if current_submap_node == "" or current_node_id == "":
+				node_panel.visible = false
+			elif node_panel.has_method("refresh"):
+				var info_node = "Location: %s" % GameState.get_location_text()
+				node_panel.refresh(current_submap_node, current_node_id, info_node)
+	if node_panel.visible:
+		_refresh_log_outputs()
 
 func _refresh_account_selector():
 	account_select.clear()
@@ -349,17 +441,24 @@ func _refresh_account_selector():
 func _refresh_visibility():
 	account_box.visible = not GameState.has_account_selected()
 	character_box.visible = GameState.has_account_selected() and not GameState.has_active_character()
-	travel_box.visible = GameState.has_active_character()
 	if not GameState.has_active_character():
 		inventory_panel.visible = false
 		skills_panel.visible = false
+		_hide_sub_panels()
 
 func _set_action_buttons_enabled(enabled: bool):
-	harvest_button.disabled = not enabled
-	combat_button.disabled = not enabled
-	return_button.disabled = not enabled
-	inventory_button.disabled = not enabled
-	skills_button.disabled = not enabled
-	craft_button.disabled = not enabled
-	rest_button.disabled = not enabled
-	save_exit_button.disabled = false
+	map_button.disabled = not enabled
+	if primary_action_bar.has_method("set_enabled"):
+		primary_action_bar.set_enabled(enabled)
+	if map_panel.has_method("set_enabled"):
+		map_panel.set_enabled(enabled)
+	if town_panel.has_method("set_enabled"):
+		town_panel.set_enabled(enabled)
+	if zone_panel.has_method("set_enabled"):
+		zone_panel.set_enabled(enabled)
+	if node_panel.has_method("set_enabled"):
+		node_panel.set_enabled(enabled)
+	if not enabled:
+		inventory_panel.visible = false
+		skills_panel.visible = false
+		_hide_sub_panels()

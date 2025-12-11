@@ -36,7 +36,7 @@ You play as a single character card who gains skills, inventory, and progression
 - **Optional Additions**: Pets/followers for expeditions, player market for asynchronous economy, events/seasons with modifiers, lore system (journals/notes), cosmetics/supporter pass without pay-to-win.
 
 ## Current Design & Structure (Single Source of Truth)
-- **Project wiring**: `project.godot` autoloads `SaveSystem`, `GameState`, `EncounterSystem`, `CraftingSystem`; main scene `scenes/Main.tscn` is a text harness with account/character selection (hidden after choose), travel/node movement, actions (harvest, combat, return, craft, rest, save), plus full-screen overlays for Inventory and Skills; logic in `scenes/Main.gd`.
+- **Project wiring**: `project.godot` autoloads `SaveSystem`, `GameState`, `EncounterSystem`, `CraftingSystem`; main scene `scenes/Main.tscn` is a text harness with account/character selection (hidden after choose), log/status, and a Map button. Navigation now uses full-screen overlays: `MapPanel` (choose town/lake/forest/mountain), `TownPanel`, and `ZonePanel` (list nodes, move to node, harvest/combat/return/rest/craft). A reusable `ActionBar` (Inventory/Skills/Save & Exit) sits on Main and all overlays. Inventory/Skills remain full-screen overlays; logic is still centralized in `scenes/Main.gd`.
 - **Accounts & saves**: Per-account folder under `userdata/<account>/`; one JSON per character plus `sharedstash.json` (inventory, unused in UI). Saves write to both `res://userdata` (for quick local debugging) and `user://userdata` (browser/portable safe); loading falls back to `user://` if `res://` is missing. No passwords; names sanitized. Save layout example: `userdata/berkerz/berkerz.json`, `userdata/berkerz/testo.json`, `userdata/berkerz/sharedstash.json`.
 - **Character model** (`scripts/core/character.gd`): `name`, `background` (harvester/fighter), `location` (e.g., `town` or `lake>node_id`), `stats` (`stats.gd`: HP/energy max 100, power/defense/craft/speed), skills loaded from `data/skills.gd` (harvest: harvest.fishing/mining/woodcutting/foraging/hunting; combat: combat.swordsmanship/archery/unarmed; craft: craft.crafting), `inventory` (`inventory.gd`: id→count), `equipped` slots (`weapon`, `hat`, `armor`). New characters start with swordsmanship 1, 100 camping supplies, two swords (rusty, wooden), and test armor pieces (leather hat/armor) for equip flow.
 - **Skills registry** (`data/skills.gd`): Categories/ids with `all_ids()` to initialize characters: combat.swordsmanship/archery/unarmed; harvest.fishing/mining/woodcutting/foraging/hunting; craft.crafting.
@@ -46,10 +46,11 @@ You play as a single character card who gains skills, inventory, and progression
 - **Orchestration** (`game_state.gd`): Manages account/character lifecycle, seeds starter gear/supplies, tracks location, handles travel/node movement, equips/unequips items, inventory listing helpers for UI, and saves after actions. Resting consumes 1 camping supply.
 
 ## Recent Changes (for iteration tracking)
-- Inventory/Skills overlays: “Inventory” opens a full-screen list for equipped slots (weapon/hat/armor) with click-to-unequip, an equipment list (weapons/armor/hats/projectiles) with click-to-equip, and a read-only items list; “Skills” shows skill levels; status panel no longer dumps the skill list.
-- Equipment data: items now declare an optional `slot`; new items include `rusty_sword`, `wooden_sword`, `arrow`, `leather_hat`, `leather_armor`. Items of type weapon/hat/armor/projectile are treated as equipment in UI.
-- Starter kit: new characters get swordsmanship 1, 100 camping supplies, and two test swords (rusty + wooden) for equip/unequip flow.
-- Travel/combat/harvest: unchanged from prior iteration—travel cost by submap/node distance; node actions consume node energy and grant XP based on submap (harvest.*) or equipped weapon skill/unarmed.
+- UI overlays are now fully opaque with a reusable `ActionBar` (Inventory/Skills/Save) and a scrollable `InfoBox` used for logs on Main and node panels. Map → Zone → Node flow is split into dedicated screens; nodes open their own panel with full action set.
+- Inventory/Skills overlays: full-screen, opaque. Inventory lists equipped slots (click to unequip), equipment bucket (click to equip), and items list. Skills shows levels.
+- Equipment data: items declare an optional `slot`; equipment includes `rusty_sword`, `wooden_sword`, `arrow`, `leather_hat`, `leather_armor`. Weapon skill is pulled from the item metadata to route combat XP.
+- Starter kit: characters start with swordsmanship 1, 100 camping supplies, two swords (rusty + wooden), leather hat/armor for equip testing.
+- Travel/combat/harvest: travel cost by submap/node distance; node actions consume node energy and grant XP based on submap (harvest.*) or equipped weapon skill/unarmed.
 
 ## Roadmap / Next Refinements
 - Apply skills/stats to outcomes: fold gather/power/speed into yields, damage, timers; tune XP curves.
@@ -58,7 +59,7 @@ You play as a single character card who gains skills, inventory, and progression
 - Enrich content: more nodes/recipes/backgrounds with distinct starting gear/stats; link items to bonuses; add bows/projectiles and more equipment slots.
 - Add energy regen over time or via rest/sleep timers; log session durations for idle play.
 - Add failure states/recovery flows (e.g., lose carried items on defeat, retrieve via low-risk nodes).
-- Content/Systems backlog:
+- Content/Systems backlog (still pending):
   - Material categories (wood, ore, raw fish, herbs, hides/meat) with tiered variants and processing chains (smelt ore → steel, prepare hides, process wood).
   - Tool-gated harvesting (fishing pole, skinning knife, herbalist gloves/shears, axe, mining picks) and quality tiers for weapons/armor/tools (poor/okay/fine/well-made/masterwork; leather/iron/steel, masterwork steel as top end).
   - New resources: coins (smelt gold; humanoid enemies can drop gold; sell items for gold), hunger as a managed stat (ties into cooking/crafting for healing/regen), item weights + character carry limit.
@@ -67,7 +68,13 @@ You play as a single character card who gains skills, inventory, and progression
 
 ## File & API Guide (What to Edit/Call)
 - **Scenes/UI**
-  - `scenes/Main.tscn` / `scenes/Main.gd`: Text harness UI. Buttons: Travel to Submap, Move to Node, Harvest, Combat, Return to Town, Inventory (opens overlay), Skills (opens overlay), Craft (plank), Rest, Save & Exit. Account/character selectors hide after selection; overlays are full-screen panels with close buttons.
+  - `scenes/Main.tscn` / `scenes/Main.gd`: Text harness for account/character selection, log/status, and navigation. Primary controls are Map + `ActionBar` (Inventory, Skills, Save & Exit). No travel/actions live on the main screen; everything routes through overlays.
+  - `scenes/MapPanel.tscn`: Zone chooser (town, lake, forest, mountain) with `ActionBar`. Selecting a zone calls `GameState.travel_to_submap` then opens the relevant panel.
+  - `scenes/TownPanel.tscn`: Town-only actions (Rest, Craft plank, Map) plus `ActionBar`.
+  - `scenes/ZonePanel.tscn`: Non-town zones. Lists nodes (buttons move via `GameState.move_to_node`), offers Rest/Craft + Map + `ActionBar`.
+  - `scenes/NodePanel.tscn`: Per-node actions after movement: Harvest, Combat, Return to Town, Rest, Craft, Map/back-to-zone, plus `ActionBar`.
+  - `scenes/InfoBox.tscn`: Reusable scrollable info panel (fixed height) used for logs/info on Main and Zone/Node overlays.
+  - `scenes/InventoryPanel.tscn` / `scenes/SkillsPanel.tscn`: Full-screen overlays with opaque backgrounds; emit signals to equip/unequip or refresh the skills list.
 - **Core Models** (`scripts/core/`)
   - `character.gd`: Fields `name`, `background`, `location`, `stats`, `skills` (from `data/skills.gd`), `inventory`, `equipped` slots (`weapon`, `hat`, `armor`). Helpers: `new_with_background`, `equip_item`/`unequip_slot`, `get_equipped_weapon`, `get_equipped_items`, `to_dict/from_dict`. Background currently sets swordsmanship 1.
   - `stats.gd`: HP/energy caps and values, power/defense/craft/speed; rest/damage/energy consumption; serialization.
@@ -95,10 +102,19 @@ You play as a single character card who gains skills, inventory, and progression
   - `project.godot`: Autoloads systems; main scene `scenes/Main.tscn`.
 
 ### How to Use (CLI/UI)
-1) Launch: `godot4 --path . --run`. Create/select account and character. Background choice currently just sets swordsmanship 1.
-2) Travel: pick a submap -> “Travel to Submap” (cost: exit from current node * zone node cost + submap travel cost).
-3) Move to Node: pick node -> “Move to Node” (cost: abs(distance diff) * zone node cost). Town has no nodes.
-4) Inventory: click “Inventory” to open the overlay. Top list shows equipped slots (weapon/hat/armor); click to unequip. Middle list shows equipment (weapon/hat/armor/projectile items) and equips on click; bottom list shows other items.
-5) Act: from a node, use Harvest (XP based on submap) or Combat (XP based on equipped weapon skill; unarmed if no weapon). Node.energy_cost is consumed here.
-6) Return: “Return to Town” pays exit cost + town travel cost.
-7) Rest: costs 1 camping supply, restores HP/energy; Craft runs plank recipe; Save & Exit persists active character. Use “Skills” to view current levels.
+1) Launch: `godot4 --path . --run`. Create/select account and character (both backgrounds seed swordsmanship 1).
+2) Hit `Map` on Main to open `MapPanel`; choose town/lake/forest/mountain. Travel cost = exit-from-node energy + submap travel cost.
+3) In `ZonePanel`, click a node to move there (cost: abs(distance diff) * zone node cost; town has no nodes). `Return to Town` pays exit + town travel.
+4) Use `Harvest` or `Combat` from `ZonePanel` when at a node; XP routes by submap (harvest.*) or equipped weapon skill/unarmed (combat.*); node.energy_cost is consumed here.
+5) Rest (town/zone panels) spends 1 camping supply; Craft runs the plank recipe.
+6) Inventory/Skills live in the shared `ActionBar` (Main/Map/Town/Zone) and open full-screen overlays. Inventory lists equipped slots (click to unequip), equipment bucket (click to equip), and other items.
+7) `Save & Exit` lives on the `ActionBar` and persists the active character before quitting.
+
+## Debug & Refactor Notes (latest)
+- Navigation refactor: travel controls moved off Main. Map → Town/Zone panels are full-screen overlays with opaque backgrounds; nodes only appear after choosing a zone. Shared `ActionBar` (Inventory/Skills/Save & Exit) lives on Main and every overlay.
+- Inventory/Skills overlays: `InventoryPanel.tscn` and `SkillsPanel.tscn` emit signals to equip/unequip and refresh skill lists; both use opaque backgrounds for readability.
+- Layout: portrait-focused ScrollContainer with padding; overlays rely on MarginContainer + PanelContainer for solid backgrounds.
+- Saves: dual writes to `res://userdata` and `user://userdata`; `nuke.sh` wipes both locations. Core `class_name` exports restored after warning cleanup rollback to keep the game stable.
+- Starter kit: rusty + wooden sword, leather hat/armor, 100 camping supplies. Combat XP routes by equipped weapon (swordsmanship/unarmed); harvesting XP by submap.
+- Travel: zones (town/lake/forest/mountain) with distance-based node costs; actions consume node energy, travel cost handled separately. Location persists in saves and is surfaced on Map/Zone panels.
+- Known minor warnings: some “class_name matches global” and narrowing conversions remain; left intentionally to avoid further breakage while the UI is stable.

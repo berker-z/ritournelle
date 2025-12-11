@@ -7,7 +7,7 @@ var active_jobs: Array = []
 var _next_id := 1
 
 func start_job(recipe: Recipe, character: Character) -> Dictionary:
-	if recipe.id.is_empty():
+	if recipe == null or recipe.id.is_empty():
 		return {"ok": false, "log": ["Unknown recipe."]}
 	if not character.inventory.can_afford(recipe.inputs):
 		return {"ok": false, "log": ["Missing ingredients."]}
