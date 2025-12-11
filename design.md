@@ -37,7 +37,7 @@ You play as a single character card who gains skills, inventory, and progression
 
 ## Current Design & Structure (Single Source of Truth)
 - **Project wiring**: `project.godot` autoloads `SaveSystem`, `GameState`, `EncounterSystem`, `CraftingSystem`; main scene `scenes/Main.tscn` is a text harness with account/character selection (hidden after choose), travel/node movement, actions (harvest, combat, return, craft, rest, save), plus full-screen overlays for Inventory and Skills; logic in `scenes/Main.gd`.
-- **Accounts & saves**: Per-account folder under `userdata/<account>/`; one JSON per character plus `sharedstash.json` (inventory, unused in UI). No passwords; names sanitized. Save layout example: `userdata/berkerz/berkerz.json`, `userdata/berkerz/testo.json`, `userdata/berkerz/sharedstash.json`.
+- **Accounts & saves**: Per-account folder under `userdata/<account>/`; one JSON per character plus `sharedstash.json` (inventory, unused in UI). Saves write to both `res://userdata` (for quick local debugging) and `user://userdata` (browser/portable safe); loading falls back to `user://` if `res://` is missing. No passwords; names sanitized. Save layout example: `userdata/berkerz/berkerz.json`, `userdata/berkerz/testo.json`, `userdata/berkerz/sharedstash.json`.
 - **Character model** (`scripts/core/character.gd`): `name`, `background` (harvester/fighter), `location` (e.g., `town` or `lake>node_id`), `stats` (`stats.gd`: HP/energy max 100, power/defense/craft/speed), skills loaded from `data/skills.gd` (harvest: harvest.fishing/mining/woodcutting/foraging/hunting; combat: combat.swordsmanship/archery/unarmed; craft: craft.crafting), `inventory` (`inventory.gd`: id→count), `equipped` slots (`weapon`, `hat`, `armor`). New characters start with swordsmanship 1, 100 camping supplies, two swords (rusty, wooden), and test armor pieces (leather hat/armor) for equip flow.
 - **Skills registry** (`data/skills.gd`): Categories/ids with `all_ids()` to initialize characters: combat.swordsmanship/archery/unarmed; harvest.fishing/mining/woodcutting/foraging/hunting; craft.crafting.
 - **Items** (`data/items.gd`, `item_data.gd`): Items define `type` (weapon/hat/armor/projectile/material/consumable), optional `slot` for equip targets, and optional `skill` used for combat XP routing. Examples: `rusty_sword`, `wooden_sword` (slot weapon, skill combat.swordsmanship), `arrow` (projectile), `leather_hat`/`leather_armor` (slots hat/armor), `camping_supplies` (rest), `log`/`herb` materials.
@@ -58,6 +58,12 @@ You play as a single character card who gains skills, inventory, and progression
 - Enrich content: more nodes/recipes/backgrounds with distinct starting gear/stats; link items to bonuses; add bows/projectiles and more equipment slots.
 - Add energy regen over time or via rest/sleep timers; log session durations for idle play.
 - Add failure states/recovery flows (e.g., lose carried items on defeat, retrieve via low-risk nodes).
+- Content/Systems backlog:
+  - Material categories (wood, ore, raw fish, herbs, hides/meat) with tiered variants and processing chains (smelt ore → steel, prepare hides, process wood).
+  - Tool-gated harvesting (fishing pole, skinning knife, herbalist gloves/shears, axe, mining picks) and quality tiers for weapons/armor/tools (poor/okay/fine/well-made/masterwork; leather/iron/steel, masterwork steel as top end).
+  - New resources: coins (smelt gold; humanoid enemies can drop gold; sell items for gold), hunger as a managed stat (ties into cooking/crafting for healing/regen), item weights + character carry limit.
+  - New skill: cooking; extend node rewards to hunger/food loops.
+  - Expand nodes/encounters: harvest nodes can trigger attacks with flee/leave-loot or fight options; zone-specific encounter rates (lake low, forest medium with hunting grounds, mountain high) and a future combat-focused zone (e.g., badlands).
 
 ## File & API Guide (What to Edit/Call)
 - **Scenes/UI**

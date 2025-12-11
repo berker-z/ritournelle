@@ -29,7 +29,7 @@ const SUBMAP_NODE_COSTS := {
 
 func _ready():
 	_load_data()
-	SaveSystem.ensure_base_dir()
+	SaveSystem.ensure_base_dirs()
 
 func _load_data():
 	for submap in MapsData.MAPS.keys():
