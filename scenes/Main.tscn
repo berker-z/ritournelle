@@ -162,6 +162,14 @@ text = "Combat"
 layout_mode = 2
 text = "Return to Town"
 
+[node name="InventoryButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Inventory"
+
+[node name="SkillsButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Skills"
+
 [node name="CraftButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
 layout_mode = 2
 text = "Craft (plank)"
@@ -181,3 +189,119 @@ size_flags_vertical = 1
 text = "Status..."
 vertical_alignment = 1
 autowrap_mode = 2
+
+[node name="InventoryPanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Panel" type="Panel" parent="InventoryPanel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="MarginContainer" type="MarginContainer" parent="InventoryPanel/Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="InventoryPanel/Panel/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="InventoryHeader" type="HBoxContainer" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InventoryTitle" type="Label" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer/InventoryHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Inventory"
+
+[node name="CloseInventoryButton" type="Button" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer/InventoryHeader"]
+layout_mode = 2
+text = "Close"
+
+[node name="EquippedLabel" type="Label" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Equipped"
+
+[node name="EquippedList" type="ItemList" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+allow_reselect = true
+item_count = 0
+
+[node name="EquipmentLabel" type="Label" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Equipments"
+
+[node name="EquipmentList" type="ItemList" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+allow_reselect = true
+item_count = 0
+
+[node name="ItemsLabel" type="Label" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Items"
+
+[node name="ItemsList" type="ItemList" parent="InventoryPanel/Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+allow_reselect = true
+item_count = 0
+
+[node name="SkillsPanel" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 0
+
+[node name="Panel" type="Panel" parent="SkillsPanel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="MarginContainer" type="MarginContainer" parent="SkillsPanel/Panel"]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SkillsPanel/Panel/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SkillsHeader" type="HBoxContainer" parent="SkillsPanel/Panel/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SkillsTitle" type="Label" parent="SkillsPanel/Panel/MarginContainer/VBoxContainer/SkillsHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Skills"
+
+[node name="CloseSkillsButton" type="Button" parent="SkillsPanel/Panel/MarginContainer/VBoxContainer/SkillsHeader"]
+layout_mode = 2
+text = "Close"
+
+[node name="SkillsList" type="ItemList" parent="SkillsPanel/Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+allow_reselect = true
+item_count = 0

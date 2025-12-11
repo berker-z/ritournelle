@@ -9,6 +9,8 @@ var value := 1
 var stats_bonus := {}
 var stackable := true
 var max_stack := 99
+var skill_id := ""
+var slot := ""
 
 func _init(data: Dictionary = {}):
 	id = data.get("id", "")
@@ -19,3 +21,5 @@ func _init(data: Dictionary = {}):
 	stats_bonus = data.get("stats_bonus", {})
 	stackable = data.get("stackable", true)
 	max_stack = data.get("max_stack", 99)
+	skill_id = data.get("skill", "")
+	slot = data.get("slot", "")

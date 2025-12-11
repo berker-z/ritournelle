@@ -14,8 +14,18 @@ var player: Character
 var nodes: Dictionary = {}
 var recipes: Dictionary = {}
 var submap_nodes: Dictionary = {} # submap -> Array[MapNode]
-const SUBMAP_TRAVEL_COST := 10.0
-const NODE_TRAVEL_COST := 2.0
+const SUBMAP_TRAVEL_COSTS := {
+	"town": 10.0,
+	"lake": 10.0,
+	"forest": 10.0,
+	"mountain": 10.0
+}
+const SUBMAP_NODE_COSTS := {
+	"town": 0.0,
+	"lake": 2.0,
+	"forest": 2.0,
+	"mountain": 3.0
+}
 
 func _ready():
 	_load_data()
@@ -36,6 +46,10 @@ func _seed_inventory(character: Character):
 	character.inventory.add("log", 3)
 	character.inventory.add("herb", 2)
 	character.inventory.add("camping_supplies", 100)
+	character.inventory.add("rusty_sword", 1)
+	character.inventory.add("wooden_sword", 1)
+	character.inventory.add("leather_hat", 1)
+	character.inventory.add("leather_armor", 1)
 
 func has_account_selected() -> bool:
 	return account != null and not account_name.is_empty()
@@ -137,6 +151,57 @@ func get_inventory_lines() -> Array:
 		return []
 	return player.inventory.to_lines()
 
+func get_equipped_entries() -> Array:
+	if player == null:
+		return []
+	var entries: Array = []
+	for slot in player.equipped.keys():
+		var item_id: String = player.equipped.get(slot, "")
+		var meta = ItemsData.get_item_static(item_id) if item_id != "" else {}
+		entries.append({
+			"slot": slot,
+			"item_id": item_id,
+			"name": meta.get("name", item_id),
+			"type": meta.get("type", ""),
+			"slot_name": ItemsData.slot_for(meta)
+		})
+	return entries
+
+func get_equipment_inventory_entries() -> Array:
+	if player == null:
+		return []
+	var entries: Array = []
+	for item_id in player.inventory.items.keys():
+		var count: int = int(player.inventory.items[item_id])
+		var meta = ItemsData.get_item_static(item_id)
+		if ItemsData.is_equipment(meta):
+			entries.append({
+				"item_id": item_id,
+				"name": meta.get("name", item_id),
+				"type": meta.get("type", ""),
+				"slot": ItemsData.slot_for(meta),
+				"count": count
+			})
+	entries.sort_custom(func(a, b): return a.get("name", "") < b.get("name", ""))
+	return entries
+
+func get_item_inventory_entries() -> Array:
+	if player == null:
+		return []
+	var entries: Array = []
+	for item_id in player.inventory.items.keys():
+		var count: int = int(player.inventory.items[item_id])
+		var meta = ItemsData.get_item_static(item_id)
+		if not ItemsData.is_equipment(meta):
+			entries.append({
+				"item_id": item_id,
+				"name": meta.get("name", item_id),
+				"type": meta.get("type", ""),
+				"count": count
+			})
+	entries.sort_custom(func(a, b): return a.get("name", "") < b.get("name", ""))
+	return entries
+
 func rest() -> Array:
 	if player == null:
 		return ["No active character. Create or select one first."]
@@ -194,13 +259,23 @@ func travel_to_submap(submap: String) -> Array:
 	if submap == "":
 		return ["Choose a submap."]
 	var current_submap = get_current_submap()
+	var exit_cost = _exit_cost_from_current()
+	var travel_cost = SUBMAP_TRAVEL_COSTS.get(submap, 10.0)
+	# If already in target submap and at entrance, nothing to do.
 	if current_submap == submap and get_current_node() == "":
 		return ["Already in %s." % submap]
-	var exit_cost = _exit_cost_from_current()
-	var submap_cost = SUBMAP_TRAVEL_COST if current_submap != submap else 0.0
-	var total_cost = exit_cost + submap_cost
+	# If in the same submap but at a node, just pay exit cost to return to entrance.
+	if current_submap == submap:
+		var total = exit_cost
+		if player.stats.energy < total:
+			return ["Not enough energy: need %.1f to return to %s entrance." % [total, submap]]
+		player.stats.consume_energy(total)
+		player.location = submap
+		SaveSystem.save_character(account_name, player)
+		return ["Returned to %s entrance (-%.1f energy)." % [submap, total]]
+	var total_cost = exit_cost + travel_cost
 	if player.stats.energy < total_cost:
-		return ["Not enough energy: need %.1f (exit %.1f + travel %.1f)" % [total_cost, exit_cost, submap_cost]]
+		return ["Not enough energy: need %.1f (exit %.1f + travel %.1f)" % [total_cost, exit_cost, travel_cost]]
 	player.stats.consume_energy(total_cost)
 	player.location = submap
 	SaveSystem.save_character(account_name, player)
@@ -218,16 +293,18 @@ func move_to_node(submap: String, node_id: String) -> Array:
 	var target_distance = _node_distance(submap, node_id)
 	if target_distance <= 0:
 		return ["Node %s is not in %s." % [node_id, submap]]
-	var exit_cost = _exit_cost_from_current()
-	var entry_cost = target_distance * NODE_TRAVEL_COST
-	var total_cost = exit_cost + entry_cost
+	var current_node = get_current_node()
+	var current_distance = _node_distance(submap, current_node) if current_node != "" else 0
+	var diff = abs(target_distance - current_distance)
+	if diff == 0:
+		return ["Already at %s." % node_id]
+	var node_cost = _node_cost(submap)
+	var total_cost = diff * node_cost
 	if player.stats.energy < total_cost:
-		return ["Not enough energy: need %.1f (exit %.1f + move %.1f)." % [total_cost, exit_cost, entry_cost]]
+		return ["Not enough energy: need %.1f to move." % total_cost]
 	player.stats.consume_energy(total_cost)
 	var log: Array = []
-	if exit_cost > 0:
-		log.append("Left current node (-%.1f energy)." % exit_cost)
-	log.append("Moved to %s (-%.1f energy)." % [node_id, entry_cost])
+	log.append("Moved to %s (-%.1f energy)." % [node_id, total_cost])
 	player.location = "%s>%s" % [submap, node_id]
 	SaveSystem.save_character(account_name, player)
 	return log
@@ -249,13 +326,41 @@ func act_in_current_node(action_type: String) -> Array:
 	if action_type == "harvest":
 		node.node_type = "harvest"
 		node.damage_range = Vector2.ZERO
+		node.xp_reward = {_harvest_skill_for_submap(submap): _xp_for_node(node, "gather")}
 	elif action_type == "combat":
 		node.node_type = "combat"
+		node.xp_reward = {_combat_skill_for_equipped(): _xp_for_node(node, "combat")}
 	else:
 		return ["Unknown action."]
 	var result = EncounterSystem.resolve(node, player)
 	SaveSystem.save_character(account_name, player)
 	return result.get("log", [])
+
+func equip_sword() -> Array:
+	if player == null:
+		return ["No active character. Create or select one first."]
+	var options = ["rusty_sword", "wooden_sword", "sword"]
+	var message = "No sword to equip."
+	for candidate in options:
+		if player.inventory.has(candidate, 1):
+			message = player.equip_item(candidate)
+			break
+	SaveSystem.save_character(account_name, player)
+	return [message]
+
+func equip_item(item_id: String) -> Array:
+	if player == null:
+		return ["No active character. Create or select one first."]
+	var message = player.equip_item(item_id)
+	SaveSystem.save_character(account_name, player)
+	return [message]
+
+func unequip(slot: String) -> Array:
+	if player == null:
+		return ["No active character. Create or select one first."]
+	var message = player.unequip_slot(slot)
+	SaveSystem.save_character(account_name, player)
+	return [message]
 
 func _exit_cost_from_current() -> float:
 	var current_node = get_current_node()
@@ -265,7 +370,7 @@ func _exit_cost_from_current() -> float:
 	var distance = _node_distance(submap, current_node)
 	if distance <= 0:
 		return 0.0
-	return distance * NODE_TRAVEL_COST
+	return distance * _node_cost(submap)
 
 func _node_distance(submap: String, node_id: String) -> int:
 	if not submap_nodes.has(submap):
@@ -275,3 +380,35 @@ func _node_distance(submap: String, node_id: String) -> int:
 		if node.id == node_id:
 			return i + 1
 	return -1
+
+func _node_cost(submap: String) -> float:
+	return SUBMAP_NODE_COSTS.get(submap, 2.0)
+
+func _harvest_skill_for_submap(submap: String) -> String:
+	match submap:
+		"lake":
+			return "harvest.fishing"
+		"forest":
+			return "harvest.woodcutting"
+		"mountain":
+			return "harvest.mining"
+		_:
+			return "harvest.foraging"
+
+func _combat_skill_for_equipped() -> String:
+	var weapon = player.get_equipped_weapon()
+	if weapon == "":
+		return "combat.unarmed"
+	var item_meta = ItemsData.get_item_static(weapon)
+	var skill_id = item_meta.get("skill", "")
+	if skill_id != "":
+		return skill_id
+	return "combat.unarmed"
+
+func _xp_for_node(node: MapNode, kind: String) -> float:
+	var total: float = 0.0
+	for v in node.xp_reward.values():
+		total += float(v)
+	if total <= 0:
+		total = 5.0
+	return total
