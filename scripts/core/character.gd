@@ -87,7 +87,7 @@ func rest():
 	stats.rest()
 
 func apply_rewards(rewards: Dictionary) -> Dictionary:
-	var log: Array = []
+	var log: Array[String] = []
 	if rewards.has("items"):
 		for item_id in rewards["items"].keys():
 			var amount: int = int(rewards["items"][item_id])

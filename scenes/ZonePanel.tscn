@@ -1,6 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=4 format=3 uid="uid://yx0egnhmy10t"]
 
-[ext_resource type="Script" path="res://scenes/ZonePanel.gd" id="1"]
+[ext_resource type="Script" uid="uid://d4ekaf6yr1myo" path="res://scenes/ZonePanel.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ActionBar.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/InfoBox.tscn" id="3"]
 
@@ -29,7 +29,6 @@ offset_left = 20.0
 offset_top = 20.0
 offset_right = -20.0
 offset_bottom = -20.0
-mouse_filter = 1
 
 [node name="PanelContainer" type="PanelContainer" parent="MarginContainer"]
 layout_mode = 2
@@ -62,9 +61,9 @@ size_flags_horizontal = 3
 text = "Zone"
 
 [node name="CloseButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header"]
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Close"
-custom_minimum_size = Vector2(0, 36)
 
 [node name="InfoBox" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer" instance=ExtResource("3")]
 layout_mode = 2
@@ -89,28 +88,26 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
 [node name="RestButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Actions"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Rest"
-custom_minimum_size = Vector2(0, 44)
 
 [node name="CraftButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Actions"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Craft (plank)"
-custom_minimum_size = Vector2(0, 44)
 
 [node name="MapButton" type="Button" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Actions"]
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Map"
-custom_minimum_size = Vector2(0, 44)
 
 [node name="BottomRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-size_flags_vertical = 1
 theme_override_constants/separation = 8
 
 [node name="ActionBar" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/BottomRow" instance=ExtResource("2")]
-layout_mode = 2

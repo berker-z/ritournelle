@@ -36,8 +36,8 @@ func get_active() -> Character:
 		return characters[active_index]
 	return null
 
-func get_character_names() -> Array:
-	var names: Array = []
+func get_character_names() -> Array[String]:
+	var names: Array[String] = []
 	for c in characters:
 		names.append(c.name)
 	return names

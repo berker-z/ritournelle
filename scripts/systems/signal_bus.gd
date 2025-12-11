@@ -1,0 +1,5 @@
+extends Node
+
+signal inventory_requested
+signal skills_requested
+signal save_exit_requested

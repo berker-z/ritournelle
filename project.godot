@@ -21,6 +21,7 @@ GameState="*res://scripts/systems/game_state.gd"
 EncounterSystem="*res://scripts/systems/encounter_system.gd"
 CraftingSystem="*res://scripts/systems/crafting_system.gd"
 SaveSystem="*res://scripts/systems/save_system.gd"
+SignalBus="*res://scripts/systems/signal_bus.gd"
 
 [display]
 

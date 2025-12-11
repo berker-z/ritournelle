@@ -22,10 +22,10 @@ func start_job(recipe: Recipe, character: Character) -> Dictionary:
 	active_jobs.append(job)
 	return {"ok": true, "log": ["Started %s (%.1fs)" % [recipe.id, recipe.craft_time]], "job_id": job["id"]}
 
-func tick(delta: float, character: Character) -> Array:
+func tick(delta: float, character: Character) -> Array[String]:
 	if active_jobs.is_empty():
 		return []
-	var finished: Array = []
+	var finished: Array[String] = []
 	for job in active_jobs:
 		job["time_left"] -= delta
 	for job in active_jobs.duplicate():

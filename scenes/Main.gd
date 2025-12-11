@@ -14,14 +14,19 @@ extends Control
 @onready var account_panel: Control = $AccountPanel
 
 var _inventory_skills_controller
-var _town_controller
 var _account_controller
-var _log_lines: Array = []
+var _navigation_controller
+var _action_controller
+var _log_lines: Array[String] = []
 
 func _ready():
 	_setup_controllers()
 	_connect_buttons()
 	_append_log("Pick or create an account to begin.")
+	
+	# Listen to global state changes
+	GameState.state_changed.connect(_on_state_changed)
+	
 	if _account_controller:
 		_account_controller.refresh_lists()
 		_account_controller.sync_visibility()
@@ -30,46 +35,32 @@ func _ready():
 	_refresh_open_panels()
 
 func _setup_controllers():
-	_account_controller = preload("res://scenes/AccountController.gd").new()
+	_account_controller = preload("res://scripts/controllers/account_controller.gd").new()
 	add_child(_account_controller)
-	_account_controller.init(
-		account_panel,
-		func(lines):
-			if lines is Array:
-				_append_logs(lines)
-			else:
-				_append_logs([lines]),
-		func(): _refresh_status(),
-		func(): _refresh_open_panels()
-	)
+	_account_controller.init(account_panel)
+	_account_controller.log_produced.connect(_append_logs_variant)
+	_account_controller.state_changed.connect(_on_state_changed)
 
-	_inventory_skills_controller = preload("res://scenes/InventorySkillsController.gd").new()
+	_inventory_skills_controller = preload("res://scripts/controllers/inventory_skills_controller.gd").new()
 	add_child(_inventory_skills_controller)
-	_inventory_skills_controller.init(
-		inventory_panel,
-		skills_panel,
-		func(lines):
-			if lines is Array:
-				_append_logs(lines)
-			else:
-				_append_logs([lines]),
-		func(): _refresh_status(),
-		func(): _refresh_open_panels(),
-		func(): _on_save_exit_pressed()
-	)
+	_inventory_skills_controller.init(inventory_panel, skills_panel)
+	_inventory_skills_controller.log_produced.connect(_append_logs_variant)
+	_inventory_skills_controller.state_changed.connect(_on_state_changed)
+	_inventory_skills_controller.save_exit_requested.connect(_on_save_exit_pressed)
 
-	# Town intents delegate to callbacks for rest/craft/map/inventory/skills/save-exit.
-	_town_controller = preload("res://scenes/TownController.gd").new()
-	add_child(_town_controller)
-	_town_controller.init(
-		town_panel,
-		func(): _do_rest(),
-		func(): _do_craft(),
-		func(): _on_map_pressed(),
-		func(): _on_inventory_pressed(),
-		func(): _on_skills_pressed(),
-		func(): _on_save_exit_pressed()
-	)
+	_navigation_controller = preload("res://scripts/controllers/navigation_controller.gd").new()
+	add_child(_navigation_controller)
+	_navigation_controller.init(map_panel, town_panel, zone_panel, node_panel)
+	_navigation_controller.log_produced.connect(_append_logs_variant)
+	_navigation_controller.state_changed.connect(_on_state_changed)
+
+	_action_controller = preload("res://scripts/controllers/action_controller.gd").new()
+	add_child(_action_controller)
+	_action_controller.init(node_panel, zone_panel, town_panel)
+	_action_controller.log_produced.connect(_append_logs_variant)
+	_action_controller.state_changed.connect(_on_state_changed)
+
+	# Town Controller removed. Signals wired manually in connect_buttons or implicitly by other controllers.
 
 func _process(delta):
 	var updates = GameState.tick(delta)
@@ -79,58 +70,45 @@ func _process(delta):
 		_refresh_open_panels()
 
 func _connect_buttons():
-	map_button.pressed.connect(_on_map_pressed)
-	if primary_action_bar.has_signal("open_inventory"):
-		primary_action_bar.open_inventory.connect(_on_inventory_pressed)
-		primary_action_bar.open_skills.connect(_on_skills_pressed)
-		primary_action_bar.save_exit.connect(_on_save_exit_pressed)
-	map_panel.select_zone.connect(_on_map_zone_selected)
+	map_button.pressed.connect(func(): _navigation_controller._on_open_map_requested())
+	
+	# SignalBus connections for global actions
+	SignalBus.inventory_requested.connect(_on_inventory_pressed)
+	SignalBus.skills_requested.connect(_on_skills_pressed)
+	SignalBus.save_exit_requested.connect(_on_save_exit_pressed)
+
+	# Close requests are still handled here for now, or could move to controller
 	map_panel.close_requested.connect(func(): map_panel.visible = false)
-	map_panel.open_inventory.connect(_on_inventory_pressed)
-	map_panel.open_skills.connect(_on_skills_pressed)
-	map_panel.save_exit.connect(_on_save_exit_pressed)
 	town_panel.close_requested.connect(func(): town_panel.visible = false)
-	zone_panel.move_to_node.connect(_on_move_to_node_requested)
-	zone_panel.rest_pressed.connect(_on_rest_pressed)
-	zone_panel.craft_pressed.connect(_on_craft_pressed)
-	zone_panel.open_map.connect(_on_map_pressed)
-	zone_panel.open_inventory.connect(_on_inventory_pressed)
-	zone_panel.open_skills.connect(_on_skills_pressed)
-	zone_panel.save_exit.connect(_on_save_exit_pressed)
 	zone_panel.close_requested.connect(func(): zone_panel.visible = false)
-	node_panel.rest_pressed.connect(_on_rest_pressed)
-	node_panel.craft_pressed.connect(_on_craft_pressed)
-	node_panel.return_pressed.connect(_on_return_pressed)
-	node_panel.harvest_pressed.connect(_on_harvest_pressed)
-	node_panel.combat_pressed.connect(_on_combat_pressed)
-	node_panel.open_map.connect(_on_map_pressed)
-	node_panel.open_zone.connect(_on_open_zone_from_node)
-	node_panel.open_inventory.connect(_on_inventory_pressed)
-	node_panel.open_skills.connect(_on_skills_pressed)
-	node_panel.save_exit.connect(_on_save_exit_pressed)
-	node_panel.close_requested.connect(func():
+	node_panel.close_requested.connect(func(): 
 		node_panel.visible = false
 		var sub = GameState.get_current_submap()
 		if sub != "":
-			_open_zone_panel(sub)
+			if _navigation_controller:
+				_navigation_controller._on_open_zone_from_node()
 	)
+	
+	# Other signals are handled by controllers init() wiring
+	# ActionBar signals (open_inventory, etc.) are now handled via SignalBus, so panel proxying is removed.
+	
+	# Town Panel signals (manual wiring since TownController is gone)
+	town_panel.open_map.connect(func(): _navigation_controller._on_open_map_requested())
+	# Rest/Craft handled by ActionController via init wiring
+	
 
-func _on_harvest_pressed():
-	_append_logs(GameState.act_in_current_node("harvest"))
+
+func _on_state_changed():
 	_refresh_status()
 	_refresh_open_panels()
 
-func _on_combat_pressed():
-	_append_logs(GameState.act_in_current_node("combat"))
-	_refresh_status()
-	_refresh_open_panels()
-
-func _on_return_pressed():
-	_append_logs(GameState.return_to_town())
-	_refresh_status()
-	_refresh_open_panels()
-	if GameState.get_current_submap() == "town":
-		_open_town_panel()
+func _append_logs_variant(msg):
+	# Controllers might emit Variant (String or Array)
+	# But we defined signal log_produced(message) which is usually one arg
+	# Check if message is Array or String
+	# Actually my controller code emits strings line by line in loop for Array.
+	# So msg is String.
+	_append_log(str(msg))
 
 func _on_inventory_pressed():
 	if _inventory_skills_controller:
@@ -140,68 +118,16 @@ func _on_skills_pressed():
 	if _inventory_skills_controller:
 		_inventory_skills_controller.request_skills()
 
-func _on_craft_pressed():
-	_do_craft()
-
-func _on_rest_pressed():
-	_do_rest()
-
-func _on_map_pressed():
-	if not GameState.has_active_character():
-		_append_log("No active character.")
-		return
-	_hide_sub_panels()
-	_refresh_map_panel()
-	map_panel.visible = true
-	node_panel.visible = false
-
-func _on_map_zone_selected(submap: String):
-	if not GameState.has_active_character():
-		_append_log("No active character.")
-		return
-	_append_logs(GameState.travel_to_submap(submap))
-	_refresh_status()
-	_refresh_open_panels()
-	map_panel.visible = false
-	var current_submap = GameState.get_current_submap()
-	if current_submap == "town":
-		_open_town_panel()
-	elif current_submap != "":
-		_open_zone_panel(current_submap)
-	var current_node = GameState.get_current_node()
-	if current_node != "":
-		_open_node_panel(current_submap, current_node)
-
-func _on_open_zone_from_node():
-	var submap = GameState.get_current_submap()
-	if submap == "":
-		return
-	_open_zone_panel(submap)
-
-func _on_move_to_node_requested(submap: String, node_id: String):
-	_append_logs(GameState.move_to_node(submap, node_id))
-	_refresh_status()
-	_refresh_open_panels()
-	var current_submap = GameState.get_current_submap()
-	var current_node = GameState.get_current_node()
-	if current_submap == submap and current_node == node_id:
-		_open_node_panel(submap, node_id)
-
 func _on_save_exit_pressed():
 	if GameState.has_active_character():
 		SaveSystem.save_character(GameState.account_name, GameState.player)
 	_append_log("Saved. Exiting.")
 	get_tree().quit()
 
-func _do_rest():
-	_append_logs(GameState.rest())
-	_refresh_status()
-	_refresh_open_panels()
 
-func _do_craft():
-	_append_logs(GameState.start_craft("plank"))
-	_refresh_status()
-	_refresh_open_panels()
+# Removed _on_harvest_pressed, _on_combat_pressed, _on_return_pressed, _on_craft_pressed, _on_rest_pressed, _on_map_pressed
+# Removed _on_map_zone_selected, _on_open_zone_from_node, _on_move_to_node_requested, _do_rest, _do_craft
+
 
 func _append_log(line: String):
 	_log_lines.append(line)
@@ -214,11 +140,10 @@ func _append_logs(lines: Array):
 		_append_log(str(line))
 
 func _refresh_log_outputs():
-	if log_box != null and log_box.has_method("set_lines"):
+	if log_box != null:
 		log_box.set_lines(_log_lines)
-		if log_box.has_method("scroll_to_end"):
-			log_box.scroll_to_end()
-	if node_panel != null and node_panel.has_method("set_log_lines"):
+		log_box.scroll_to_end()
+	if node_panel != null:
 		node_panel.set_log_lines(_log_lines)
 
 func _refresh_status():
@@ -246,107 +171,29 @@ func _refresh_status():
 		_inventory_skills_controller.refresh_if_visible()
 	_refresh_open_panels()
 
-func _refresh_map_panel():
-	if map_panel.has_method("set_enabled"):
-		map_panel.set_enabled(GameState.has_active_character())
-	if map_panel.has_method("refresh"):
-		map_panel.refresh(GameState.get_location_text())
-
-func _open_town_panel():
-	if not GameState.has_active_character():
-		return
-	_hide_sub_panels()
-	if town_panel.has_method("set_enabled"):
-		town_panel.set_enabled(true)
-	if town_panel.has_method("refresh"):
-		town_panel.refresh("Location: %s" % GameState.get_location_text())
-	town_panel.visible = true
-
-func _open_zone_panel(submap: String):
-	if not GameState.has_active_character():
-		return
-	if submap == "town":
-		_open_town_panel()
-		return
-	_hide_sub_panels()
-	var nodes = GameState.list_nodes(submap)
-	var current_node = GameState.get_current_node()
-	if zone_panel.has_method("set_enabled"):
-		zone_panel.set_enabled(true)
-	if zone_panel.has_method("refresh"):
-		var info = "Location: %s" % GameState.get_location_text()
-		zone_panel.refresh(submap, nodes, current_node, info)
-	zone_panel.visible = true
-	node_panel.visible = false
-
-func _open_node_panel(submap: String, node_id: String):
-	if not GameState.has_active_character():
-		return
-	if node_id == "":
-		return
-	_hide_sub_panels()
-	if node_panel.has_method("set_enabled"):
-		node_panel.set_enabled(true)
-	if node_panel.has_method("refresh"):
-		var info = "Location: %s" % GameState.get_location_text()
-		node_panel.refresh(submap, node_id, info)
-	node_panel.visible = true
-	zone_panel.visible = false
-	_refresh_log_outputs()
-
+# Removed _refresh_map_panel, _open_town_panel, _open_zone_panel, _open_node_panel
+# _hide_sub_panels is kept for now or removed if no longer used.
+# _set_action_buttons_enabled uses it.
 func _hide_sub_panels():
 	map_panel.visible = false
 	town_panel.visible = false
 	zone_panel.visible = false
 	node_panel.visible = false
 
+
 func _refresh_open_panels():
 	var has_character = GameState.has_active_character()
 	if _account_controller:
 		_account_controller.refresh_lists()
 		_account_controller.sync_visibility()
-	if primary_action_bar.has_method("set_enabled"):
-		primary_action_bar.set_enabled(has_character)
-	if map_panel.has_method("set_enabled"):
-		map_panel.set_enabled(has_character)
-	if town_panel.has_method("set_enabled"):
-		town_panel.set_enabled(has_character)
-	if zone_panel.has_method("set_enabled"):
-		zone_panel.set_enabled(has_character)
-	if node_panel.has_method("set_enabled"):
-		node_panel.set_enabled(has_character)
+	primary_action_bar.set_enabled(has_character)
 	if not has_character:
 		_hide_sub_panels()
-	if map_panel.visible:
-		_refresh_map_panel()
-	if town_panel.visible:
-		if has_character and town_panel.has_method("refresh"):
-			town_panel.refresh("Location: %s" % GameState.get_location_text())
-		else:
-			town_panel.visible = false
-	if zone_panel.visible:
-		if not has_character:
-			zone_panel.visible = false
-		else:
-			var current_submap = GameState.get_current_submap()
-			if current_submap == "town":
-				_open_town_panel()
-			elif current_submap != "" and zone_panel.has_method("refresh"):
-				var nodes = GameState.list_nodes(current_submap)
-				var current_node = GameState.get_current_node()
-				var info = "Location: %s" % GameState.get_location_text()
-				zone_panel.refresh(current_submap, nodes, current_node, info)
-	if node_panel.visible:
-		if not has_character:
-			node_panel.visible = false
-		else:
-			var current_submap_node = GameState.get_current_submap()
-			var current_node_id = GameState.get_current_node()
-			if current_submap_node == "" or current_node_id == "":
-				node_panel.visible = false
-			elif node_panel.has_method("refresh"):
-				var info_node = "Location: %s" % GameState.get_location_text()
-				node_panel.refresh(current_submap_node, current_node_id, info_node)
+	
+	if _navigation_controller:
+		# Navigation controller handles map, town, zone, node panels
+		_navigation_controller.refresh_panels()
+	
 	if node_panel.visible:
 		_refresh_log_outputs()
 
@@ -360,16 +207,11 @@ func _refresh_visibility():
 
 func _set_action_buttons_enabled(enabled: bool):
 	map_button.disabled = not enabled
-	if primary_action_bar.has_method("set_enabled"):
-		primary_action_bar.set_enabled(enabled)
-	if map_panel.has_method("set_enabled"):
-		map_panel.set_enabled(enabled)
-	if town_panel.has_method("set_enabled"):
-		town_panel.set_enabled(enabled)
-	if zone_panel.has_method("set_enabled"):
-		zone_panel.set_enabled(enabled)
-	if node_panel.has_method("set_enabled"):
-		node_panel.set_enabled(enabled)
+	primary_action_bar.set_enabled(enabled)
+	map_panel.set_enabled(enabled)
+	town_panel.set_enabled(enabled)
+	zone_panel.set_enabled(enabled)
+	node_panel.set_enabled(enabled)
 	if not enabled:
 		inventory_panel.visible = false
 		skills_panel.visible = false

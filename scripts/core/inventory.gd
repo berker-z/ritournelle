@@ -32,8 +32,8 @@ func deduct(requirements: Dictionary) -> bool:
 		remove(item_id, int(requirements[item_id]))
 	return true
 
-func to_lines() -> Array:
-	var lines: Array = []
+func to_lines() -> Array[String]:
+	var lines: Array[String] = []
 	for item_id in items.keys():
 		lines.append("%s x%d" % [item_id, items[item_id]])
 	lines.sort()

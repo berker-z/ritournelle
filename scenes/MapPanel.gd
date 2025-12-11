@@ -2,9 +2,6 @@ extends Control
 
 signal close_requested
 signal select_zone(submap: String)
-signal open_inventory
-signal open_skills
-signal save_exit
 
 @onready var info_label: Label = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoLabel
 @onready var action_bar = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ActionRow/ActionBar
@@ -20,9 +17,7 @@ func _ready():
 	lake_button.pressed.connect(func(): _emit_zone("lake"))
 	forest_button.pressed.connect(func(): _emit_zone("forest"))
 	mountain_button.pressed.connect(func(): _emit_zone("mountain"))
-	action_bar.open_inventory.connect(func(): emit_signal("open_inventory"))
-	action_bar.open_skills.connect(func(): emit_signal("open_skills"))
-	action_bar.save_exit.connect(func(): emit_signal("save_exit"))
+	# ActionBar handles its own signals via SignalBus
 
 func refresh(current_location: String):
 	info_label.text = "Current: %s" % current_location
@@ -40,4 +35,3 @@ func _emit_zone(submap: String):
 func _on_close_pressed():
 	visible = false
 	emit_signal("close_requested")
-

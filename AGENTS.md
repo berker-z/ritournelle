@@ -1,43 +1,96 @@
-# Repository Guidelines
+# Godot Development Guidelines & Best Practices
 
-## Project Structure
-- Main scene: `scenes/Main.tscn` (text harness). Gameplay runs via full-screen overlays:
-  - `MapPanel`, `TownPanel`, `ZonePanel`, `NodePanel` (navigation and actions)
-  - `InventoryPanel`, `SkillsPanel`, `AccountPanel` (management overlays)
-  - Shared UI pieces: `ActionBar` (Inventory/Skills/Save) and `InfoBox` (scrollable log/info)
-- Core logic: `scripts/systems` (`game_state.gd`, `save_system.gd`, `encounter_system.gd`, `crafting_system.gd`)
-- Data: `data/` (skills, items, maps, recipes)
-- Models: `scripts/core/` (character, stats, skills, inventory, item_data, map_node, recipe, account)
-- User data: `userdata/<account>/<character>.json` + `sharedstash.json` (also in `user://userdata`); `nuke.sh` wipes both.
+This document outlines the architectural principles and coding standards for this Godot 4 project. It reflects the recent refactoring to a Service-Oriented + MVC Architecture.
 
-## Build / Run
-- Run: `godot4 --path . --run`
-- Save/Exit is in the UI (`ActionBar`); autosaves on quit. `nuke.sh` clears saves for a fresh state.
+## 1. Architectural Patterns
 
-## UI & Controllers
-- Overlays are full-screen, opaque `Control` scenes with a ColorRect background. All input should be captured; avoid translucency.
-- Panels emit intent signals only; wiring belongs in controllers, not in panel scripts.
-- Controllers in use:
-  - `AccountController` + `AccountPanel` for account/character create/select/delete.
-  - `InventorySkillsController` for inventory/skills open/refresh, equip/unequip, save/exit.
-  - `TownController` for town intents (rest/craft/map/inventory/skills/save).
-- Reusable components: `ActionBar` (Inventory/Skills/Save) and `InfoBox` (log/info, scrollable).
-- Keep Main.gd thin: bootstrap controllers, logging, status refresh, map/zone/node wiring until migrated.
+### Composition Root (Main.gd)
+- **Role**: Wiring only.
+- **Responsibilities**:
+  - Instantiates Controllers.
+  - Injects dependencies (UI Panels, Services) into Controllers.
+  - Connects top-level signals (e.g., `SignalBus` to Controller methods).
+- **Anti-Pattern**: DO NOT put game logic, state management, or complex signal references in `Main.gd`.
 
-## Gameplay Data & Rules
-- Skills registry: `data/skills.gd` (combat: swordsmanship/archery/unarmed; harvest: fishing/mining/woodcutting/foraging/hunting; craft: crafting).
-- Items: `data/items.gd` with types (weapon/hat/armor/projectile/material/consumable), optional `slot` and `skill` (for combat XP routing).
-- Travel: submap entry cost (10). Node travel uses zone-specific per-step cost (lake/forest=2, mountain=3) * abs(node distance); returning to town costs energy. Town has no nodes.
-- Actions: node actions consume node energy; harvest XP by submap (harvest.*); combat XP by equipped weapon skill or unarmed if no weapon.
-- Starter kit: swordsmanship 1, rusty + wooden sword, leather hat/armor, 100 camping supplies.
+### Controllers (`scripts/controllers/`)
+- **Role**: Mediators between UI (View) and Logic (Services/State).
+- **Responsibilities**:
+  - Listen to UI signals (e.g., `button_pressed`).
+  - Call Service methods (via `GameState` facade or direct Service injection).
+  - Listen to State keys/signals (e.g., `state_changed`) to trigger UI updates.
+  - Manage UI visibility and mode switching.
+- **Rules**:
+  - Controllers should NOT contain business logic (damage calc, travel costs).
+  - Controllers should NOT hold game state (player inventory, etc.).
 
-## Coding Practices
-- Use controllers to mediate between UI signals and systems; panels should stay dumb/presentational.
-- Keep overlays full-screen, opaque; anchor all to viewport (Layout → Full Rect).
-- Prefer `rg` for searches; avoid destructive git commands unless asked.
-- Keep comments minimal and purposeful; default to ASCII.
-- Persist new logic under `scripts/` or `data/`; avoid embedding rules in UI scenes.
+### Services (`scripts/services/`)
+- **Role**: Pure business logic and data manipulation.
+- **Example**: `TravelService`, `SessionService`, `ActionService`.
+- **Responsibilities**:
+  - Perform calculations (costs, damage, RNG).
+  - Update data models (`Character`, `Inventory`).
+  - Return detailed results (Logs, Success/Fail status) to the caller.
+- **Rules**:
+  - Services should be strictly typed.
+  - Services should generally be stateless or managed by `GameState`.
+  - Services should NOT access the SceneTree or UI nodes directly.
 
-## Testing & Debug
-- Use `nuke.sh` to clear `res://userdata` and `user://userdata` between runs when needed.
-- Validate flows: account/character selection, map → zone → node travel, inventory equip/unequip, skills display, rest/craft, save & exit.
+### Facade (`GameState.gd`)
+- **Role**: Central access point for global state and persistence.
+- **Responsibilities**:
+  - Holds the "Source of Truth" (`account`, `player`, `current_submap`).
+  - Delegates specific actions to Services (`_travel_service.travel_to_submap()`).
+  - Triggers Persistence (`_save_game()`) after state mutations.
+  - Emits global `state_changed` signal.
+
+---
+
+## 2. Coding Standards
+
+### Type Safety
+- **Strict Typing**: ALWAYS use strict typing for variables and function returns.
+  - **Good**: `func get_items() -> Array[String]:`
+  - **Bad**: `func get_items() -> Array:`
+- **Collections**: Use typed arrays `Array[Type]` whenever possible. Godot 4 optimizes these significantly.
+- **Dictionaries**: Add comments describing the shape of Dictionaries if strict typing isn't possible, or prefer custom `RefCounted` classes/Resources.
+
+### Signal Management
+- **SignalBus**: Use `SignalBus` (Autoload) for global, cross-cutting events (e.g., `inventory_requested`, `game_over`, `level_up`).
+- **Direct Connections**: Use direct signal connections `object.signal.connect(callable)` instead of the editor UI for dynamic components.
+- **No Bubbling**: Do not "proxy" or re-emit signals up a UI hierarchy component-by-component.
+  - **Bad**: `Button` -> `Panel` -> `Main` -> `Controller`.
+  - **Good**: `Button` emits to `SignalBus` OR `Controller` connects directly to `Button` via `Scene` ownership.
+
+### Constants & Magic Values
+- **GameConstants**: Store all magic strings ("town", "combat"), paths, and configuration numbers (costs, IDs) in `scripts/core/game_constants.gd`.
+- **Enums**: Prefer `const` or `enum` over string literals.
+
+---
+
+## 3. Project Structure conventions
+
+- `scenes/`: `.tscn` files. Segregate by domain (`UI`, `World`, `Characters`).
+- `scripts/`:
+  - `core/`: Data models (`Character`, `Account`, `Inventory`).
+  - `controllers/`: Logic mediators (`NavigationController`).
+  - `services/`: Business logic (`TravelService`).
+  - `systems/`: Global managers (`GameState`, `SaveSystem`).
+- `data/`: Static data files (`items.gd`, `maps.gd`) - *Consider moving to Resources in future*.
+
+---
+
+## 4. Workflows
+
+### Creating a New Feature
+1. **Model**: Define data structures in `scripts/core/`.
+2. **Service**: Implement business logic in a Service class.
+3. **Facade**: Expose relevant methods via `GameState` (if global) or inject Service.
+4. **UI**: Create the View (Scene/Panel).
+5. **Controller**: Create a Controller to wire the View to the Service/Facade.
+6. **Main**: Register the Controller.
+
+### Refactoring Legacy Code
+1. Identify logic in `Main.gd` or UI scripts.
+2. Extract logic to a Service.
+3. Replace direct calls with Service calls.
+4. Clean up `has_method` or dynamic calls; replace with Signals or Types.

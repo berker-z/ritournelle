@@ -4,9 +4,6 @@ signal close_requested
 signal rest_pressed
 signal craft_pressed
 signal open_map
-signal open_inventory
-signal open_skills
-signal save_exit
 
 @onready var info_label: Label = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoLabel
 @onready var rest_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ActionRow/RestButton
@@ -20,9 +17,7 @@ func _ready():
 	rest_button.pressed.connect(func(): emit_signal("rest_pressed"))
 	craft_button.pressed.connect(func(): emit_signal("craft_pressed"))
 	map_button.pressed.connect(func(): emit_signal("open_map"))
-	action_bar.open_inventory.connect(func(): emit_signal("open_inventory"))
-	action_bar.open_skills.connect(func(): emit_signal("open_skills"))
-	action_bar.save_exit.connect(func(): emit_signal("save_exit"))
+	# ActionBar handles its own signals
 
 func refresh(info_text: String):
 	info_label.text = info_text

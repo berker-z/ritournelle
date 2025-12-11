@@ -4,7 +4,7 @@ const Character = preload("res://scripts/core/character.gd")
 const MapNode = preload("res://scripts/core/map_node.gd")
 
 func resolve(node: MapNode, character: Character) -> Dictionary:
-	var log: Array = []
+	var log: Array[String] = []
 	if not character.stats.consume_energy(node.energy_cost):
 		return {"log": ["Too tired to act. Need %.1f energy." % node.energy_cost], "down": character.is_down()}
 

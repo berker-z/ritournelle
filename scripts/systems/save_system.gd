@@ -8,7 +8,7 @@ const PRIMARY_BASE_DIR := "res://userdata"
 const FALLBACK_BASE_DIR := "user://userdata"
 const STASH_FILE := "sharedstash.json"
 
-func _base_dirs() -> Array:
+func _base_dirs() -> Array[String]:
 	return [PRIMARY_BASE_DIR, FALLBACK_BASE_DIR]
 
 func ensure_base_dirs():
@@ -39,9 +39,9 @@ func sanitize_name(raw: String, fallback_prefix: String) -> String:
 		name = fallback_prefix
 	return name
 
-func list_accounts() -> Array:
+func list_accounts() -> Array[String]:
 	ensure_base_dirs()
-	var names: Array = []
+	var names: Array[String] = []
 	var seen := {}
 	for base_dir in _base_dirs():
 		var dir = DirAccess.open(base_dir)
@@ -73,8 +73,8 @@ func create_account(raw_name: String) -> String:
 	_save_stash_all(cleaned_name, Inventory.new())
 	return cleaned_name
 
-func list_characters(account_name: String) -> Array:
-	var names: Array = []
+func list_characters(account_name: String) -> Array[String]:
+	var names: Array[String] = []
 	var seen := {}
 	for base_dir in _base_dirs():
 		var path = account_dir(account_name, base_dir)
