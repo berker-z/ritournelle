@@ -343,3 +343,41 @@ Estimated total effort: **5-8 developer days** for Phases 1-6.
 ---
 
 *Review performed: 2025-12-11*
+
+
+
+Refactoring Postmortem
+Executive Summary
+We successfully transformed a monolithic, tightly-coupled Godot codebase into a modular, service-oriented architecture. The primary focus was on decoupling logic from the UI (
+Main.gd
+) and the central state manager (GameState.gd), moving it into discrete Controllers and Services.
+
+Achievements
+Architecture: Implemented a variation of MVC. Controllers now handle UI events and delegate business logic to Services via a Facade (GameState).
+Decoupling:
+Main.gd
+ size reduced significantly. It now acts as a composition root, wiring dependencies instead of implementing game logic.
+TownController logic merged/distributed, removing unnecessary abstraction layers.
+Communication:
+Adopted SignalBus for global, cross-cutting events.
+Removed "signal bubbling" (proxy signals) in UI panels.
+Type Safety: Enforced strict typing (Array[String], Array[Dictionary]) across Core systems and Services to prevent runtime type errors.
+Maintainability:
+Introduced GameConstants to eliminate magic strings/numbers.
+Standardized file structure and naming conventions.
+Unresolved Issues / Technical Debt
+Type Safety Gaps: While we fixed Array vs Array[Type], there may still be loose typing in Dictionary values (e.g., rewards dicts). Godot's Dictionary is untyped, so runtime validation is still needed at boundaries.
+Autoload Dependencies: CraftingSystem and EncounterSystem remain as Autoloads. Ideally, these should be Services injected into GameState or ActionService to improve testability.
+UI Tight Coupling: UI Panels (MapPanel, TownPanel, etc.) are still instances in Main.tscn passed by reference. A better approach would be for Controllers to instantiate their own views or generic UI logic.
+Testing: No automated testing framework (like GUT) is currently set up, relying entirely on manual verification.
+Future Steps & Best Practices
+1. Code Sanitization
+Linter: Integrate gdtoolkit (gdformatted, gdlint) into the workflow to enforce style verification.
+Strict Typing: Continue converting Variant types to strict types where rigid interfaces exist.
+Docstrings: Add documentation comments (GDScript 2.0 style) to all Service public methods.
+2. Architecture Evolution
+Dependency Injection: Move away from preload().new() inside classes. Pass dependencies via _init() or setup() methods to facilitate mocking.
+Resources for Data: Convert items.gd and recipes.gd dictionaries into Resource files (ItemResource, RecipeResource). This leverages Godot's editor inspector and improves data safety.
+3. Testing Strategy
+Install GUT (Godot Unit Test).
+Write unit tests for SessionService (account creation/selection) and Inventory logic first, as these are critical and logic-heavy.
