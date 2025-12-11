@@ -3,8 +3,8 @@ class_name Stats
 
 var hp_max := 20
 var hp := 20
-var energy_max := 10
-var energy := 10
+var energy_max := 100
+var energy := 100
 var power := 1
 var defense := 0
 var gather := 1

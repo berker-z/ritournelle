@@ -42,6 +42,15 @@ const ITEMS := {
 		"type": "material",
 		"rarity": "common",
 		"value": 1
+	},
+	"camping_supplies": {
+		"id": "camping_supplies",
+		"name": "Camping Supplies",
+		"type": "consumable",
+		"rarity": "common",
+		"value": 1,
+		"stackable": true,
+		"max_stack": 999
 	}
 }
 

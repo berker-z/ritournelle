@@ -106,6 +106,38 @@ text = "Select"
 layout_mode = 2
 text = "Delete"
 
+[node name="TravelBox" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TravelLabel" type="Label" parent="MarginContainer/VBoxContainer/TravelBox"]
+layout_mode = 2
+text = "Travel & Expeditions"
+
+[node name="SubmapRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TravelBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SubmapSelect" type="OptionButton" parent="MarginContainer/VBoxContainer/TravelBox/SubmapRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TravelButton" type="Button" parent="MarginContainer/VBoxContainer/TravelBox/SubmapRow"]
+layout_mode = 2
+text = "Travel to Submap"
+
+[node name="NodeRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer/TravelBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NodeSelect" type="OptionButton" parent="MarginContainer/VBoxContainer/TravelBox/NodeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MoveNodeButton" type="Button" parent="MarginContainer/VBoxContainer/TravelBox/NodeRow"]
+layout_mode = 2
+text = "Move to Node"
+
 [node name="Log" type="RichTextLabel" parent="MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
@@ -120,11 +152,15 @@ size_flags_horizontal = 3
 
 [node name="HarvestButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
 layout_mode = 2
-text = "Harvest (meadow)"
+text = "Harvest"
 
 [node name="CombatButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
 layout_mode = 2
-text = "Combat (camp)"
+text = "Combat"
+
+[node name="ReturnButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
+layout_mode = 2
+text = "Return to Town"
 
 [node name="CraftButton" type="Button" parent="MarginContainer/VBoxContainer/Actions"]
 layout_mode = 2

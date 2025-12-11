@@ -14,6 +14,7 @@ var skills: Dictionary = {
 	"craft": Skill.new("craft")
 }
 var inventory := Inventory.new()
+var location := "town"
 
 static func new_with_background(char_name: String, bg: String) -> Character:
 	var character = Character.new()
@@ -30,6 +31,8 @@ func _apply_background(bg: String):
 			skills["combat"].level = 1
 		_:
 			pass
+	# start with full energy for new backgrounds
+	stats.energy = stats.energy_max
 
 func rest():
 	stats.rest()
@@ -65,7 +68,8 @@ func to_dict() -> Dictionary:
 		"background": background,
 		"stats": stats.to_dict(),
 		"skills": skills_data,
-		"inventory": inventory.to_dict()
+		"inventory": inventory.to_dict(),
+		"location": location
 	}
 
 static func from_dict(data: Dictionary) -> Character:
@@ -74,6 +78,7 @@ static func from_dict(data: Dictionary) -> Character:
 	c.background = data.get("background", "wanderer")
 	c.stats = Stats.from_dict(data.get("stats", {}))
 	c.inventory = Inventory.from_dict(data.get("inventory", {}))
+	c.location = data.get("location", "town")
 	c.skills = {}
 	for skill_id in data.get("skills", {}).keys():
 		var skill_data: Dictionary = data["skills"][skill_id]

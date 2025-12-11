@@ -14,8 +14,14 @@ extends Control
 @onready var delete_button: Button = $MarginContainer/VBoxContainer/CharacterBox/ManageRow/DeleteButton
 @onready var create_harvester_button: Button = $MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateHarvesterButton
 @onready var create_fighter_button: Button = $MarginContainer/VBoxContainer/CharacterBox/CreateRow/CreateFighterButton
+@onready var travel_box: VBoxContainer = $MarginContainer/VBoxContainer/TravelBox
+@onready var submap_select: OptionButton = $MarginContainer/VBoxContainer/TravelBox/SubmapRow/SubmapSelect
+@onready var node_select: OptionButton = $MarginContainer/VBoxContainer/TravelBox/NodeRow/NodeSelect
+@onready var travel_button: Button = $MarginContainer/VBoxContainer/TravelBox/SubmapRow/TravelButton
+@onready var move_node_button: Button = $MarginContainer/VBoxContainer/TravelBox/NodeRow/MoveNodeButton
 @onready var harvest_button: Button = $MarginContainer/VBoxContainer/Actions/HarvestButton
 @onready var combat_button: Button = $MarginContainer/VBoxContainer/Actions/CombatButton
+@onready var return_button: Button = $MarginContainer/VBoxContainer/Actions/ReturnButton
 @onready var craft_button: Button = $MarginContainer/VBoxContainer/Actions/CraftButton
 @onready var rest_button: Button = $MarginContainer/VBoxContainer/Actions/RestButton
 @onready var save_exit_button: Button = $MarginContainer/VBoxContainer/Actions/SaveExitButton
@@ -27,6 +33,7 @@ func _ready():
 	_append_log("Pick or create an account to begin.")
 	_refresh_account_selector()
 	_refresh_character_selector()
+	_refresh_map_selectors()
 	_refresh_status()
 	_refresh_visibility()
 
@@ -43,8 +50,12 @@ func _connect_buttons():
 	create_fighter_button.pressed.connect(_on_create_fighter_pressed)
 	select_button.pressed.connect(_on_select_pressed)
 	delete_button.pressed.connect(_on_delete_pressed)
+	travel_button.pressed.connect(_on_travel_pressed)
+	submap_select.item_selected.connect(_on_submap_selected)
+	move_node_button.pressed.connect(_on_move_node_pressed)
 	harvest_button.pressed.connect(_on_harvest_pressed)
 	combat_button.pressed.connect(_on_combat_pressed)
+	return_button.pressed.connect(_on_return_pressed)
 	craft_button.pressed.connect(_on_craft_pressed)
 	rest_button.pressed.connect(_on_rest_pressed)
 	save_exit_button.pressed.connect(_on_save_exit_pressed)
@@ -64,6 +75,7 @@ func _on_select_account_pressed():
 	var name = account_select.get_item_text(account_select.selected)
 	_append_logs(GameState.select_account(name))
 	_refresh_character_selector()
+	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
 
@@ -71,6 +83,7 @@ func _on_create_harvester_pressed():
 	_append_logs(GameState.create_character(name_input.text, "harvester"))
 	name_input.text = ""
 	_refresh_character_selector()
+	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
 
@@ -78,6 +91,7 @@ func _on_create_fighter_pressed():
 	_append_logs(GameState.create_character(name_input.text, "fighter"))
 	name_input.text = ""
 	_refresh_character_selector()
+	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
 
@@ -97,15 +111,37 @@ func _on_delete_pressed():
 	var name = character_select.get_item_text(character_select.selected)
 	_append_logs(GameState.delete_character(name))
 	_refresh_character_selector()
+	_refresh_map_selectors()
 	_refresh_visibility()
 	_refresh_status()
 
+func _on_submap_selected(index):
+	_refresh_node_selector()
+
+func _on_travel_pressed():
+	var submap = submap_select.get_item_text(submap_select.selected)
+	_append_logs(GameState.travel_to_submap(submap))
+	_refresh_node_selector()
+	_refresh_status()
+
+func _on_move_node_pressed():
+	var submap = submap_select.get_item_text(submap_select.selected)
+	var node_id = node_select.get_item_text(node_select.selected)
+	_append_logs(GameState.move_to_node(submap, node_id))
+	_refresh_node_selector()
+	_refresh_status()
+
 func _on_harvest_pressed():
-	_append_logs(GameState.run_node("meadow"))
+	_append_logs(GameState.act_in_current_node("harvest"))
 	_refresh_status()
 
 func _on_combat_pressed():
-	_append_logs(GameState.run_node("camp"))
+	_append_logs(GameState.act_in_current_node("combat"))
+	_refresh_status()
+
+func _on_return_pressed():
+	_append_logs(GameState.return_to_town())
+	_refresh_node_selector()
 	_refresh_status()
 
 func _on_craft_pressed():
@@ -141,6 +177,7 @@ func _refresh_status():
 	elif p == null:
 		status_lines.append("No active character. Create or select one.")
 	else:
+		status_lines.append("Location: %s" % GameState.get_location_text())
 		status_lines.append("HP %d/%d | Energy %.1f/%.1f" % [p.stats.hp, p.stats.hp_max, p.stats.energy, p.stats.energy_max])
 		var skill_parts: Array = []
 		for skill_id in p.skills.keys():
@@ -165,6 +202,42 @@ func _refresh_character_selector():
 		character_select.select(0)
 	character_select.disabled = names.size() == 0
 
+func _refresh_map_selectors():
+	submap_select.clear()
+	var maps = GameState.list_submaps()
+	for i in range(maps.size()):
+		submap_select.add_item(maps[i], i)
+	if maps.size() > 0:
+		submap_select.select(0)
+		submap_select.disabled = false
+	else:
+		submap_select.add_item("No maps", -1)
+		submap_select.select(0)
+		submap_select.disabled = true
+	_refresh_node_selector()
+
+func _refresh_node_selector():
+	node_select.clear()
+	if submap_select.disabled:
+		node_select.add_item("Travel to a submap first", -1)
+		node_select.select(0)
+		node_select.disabled = true
+		move_node_button.disabled = true
+		return
+	var submap = submap_select.get_item_text(submap_select.selected)
+	var nodes = GameState.list_nodes(submap)
+	for i in range(nodes.size()):
+		node_select.add_item(nodes[i], i)
+	if nodes.size() > 0:
+		node_select.select(0)
+		node_select.disabled = false
+		move_node_button.disabled = false
+	else:
+		node_select.add_item("No nodes", -1)
+		node_select.select(0)
+		node_select.disabled = true
+		move_node_button.disabled = true
+
 func _refresh_account_selector():
 	account_select.clear()
 	var accounts = GameState.list_accounts()
@@ -180,10 +253,12 @@ func _refresh_account_selector():
 func _refresh_visibility():
 	account_box.visible = not GameState.has_account_selected()
 	character_box.visible = GameState.has_account_selected() and not GameState.has_active_character()
+	travel_box.visible = GameState.has_active_character()
 
 func _set_action_buttons_enabled(enabled: bool):
 	harvest_button.disabled = not enabled
 	combat_button.disabled = not enabled
+	return_button.disabled = not enabled
 	craft_button.disabled = not enabled
 	rest_button.disabled = not enabled
 	save_exit_button.disabled = false
