@@ -1,16 +1,15 @@
 class_name AccountController extends Node
 
 signal log_produced(message)
-signal state_changed
 
 var _panel: Control
 
 func init(account_panel: Control):
 	_panel = account_panel
-	
+
 	if _panel == null:
 		return
-		
+
 	_connect_signals()
 	refresh_lists()
 	sync_visibility()
@@ -34,10 +33,10 @@ func refresh_lists():
 		return
 	var accounts = GameState.list_accounts()
 	_panel.set_accounts(accounts)
-		
+
 	var has_account = GameState.has_account_selected()
 	_panel.set_enabled(has_account)
-		
+
 	var characters: Array[String] = []
 	if has_account:
 		characters = GameState.get_character_names()
@@ -55,35 +54,30 @@ func _on_create_account(name: String):
 	var logs: Array[String] = GameState.create_account(name)
 	_emit_logs(logs)
 	refresh_lists()
-	state_changed.emit()
 	sync_visibility()
 
 func _on_select_account(name: String):
 	var logs: Array[String] = GameState.select_account(name)
 	_emit_logs(logs)
 	refresh_lists()
-	state_changed.emit()
 	sync_visibility()
 
 func _on_create_character(name: String, archetype: String):
 	var logs: Array[String] = GameState.create_character(name, archetype)
 	_emit_logs(logs)
 	refresh_lists()
-	state_changed.emit()
 	sync_visibility()
 
 func _on_select_character(name: String):
 	var logs: Array[String] = GameState.select_character_by_name(name)
 	_emit_logs(logs)
 	refresh_lists()
-	state_changed.emit()
 	sync_visibility()
 
 func _on_delete_character(name: String):
 	var logs: Array[String] = GameState.delete_character(name)
 	_emit_logs(logs)
 	refresh_lists()
-	state_changed.emit()
 	sync_visibility()
 
 func _emit_logs(logs):

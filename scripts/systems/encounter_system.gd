@@ -2,11 +2,17 @@ extends Node
 
 const Character = preload("res://scripts/core/character.gd")
 const MapNode = preload("res://scripts/core/map_node.gd")
+const EncounterOutcome = preload("res://scripts/core/encounter_outcome.gd")
 
-func resolve(node: MapNode, character: Character) -> Dictionary:
-	var log: Array[String] = []
+func resolve(node: MapNode, character: Character) -> EncounterOutcome:
+	var outcome := EncounterOutcome.new()
 	if not character.stats.consume_energy(node.energy_cost):
-		return {"log": ["Too tired to act. Need %.1f energy." % node.energy_cost], "down": character.is_down()}
+		outcome.log.append("Too tired to act. Need %.1f energy." % node.energy_cost)
+		outcome.down = character.is_down()
+		outcome.energy_spent = 0.0
+		outcome.damage = 0
+		outcome.items = {}
+		return outcome
 
 	var rng = RandomNumberGenerator.new()
 	rng.randomize()
@@ -27,9 +33,9 @@ func resolve(node: MapNode, character: Character) -> Dictionary:
 		damage_taken = max(0, rng.randi_range(dmg_min, dmg_max) + node.tier - character.stats.defense)
 		if damage_taken > 0:
 			var down = character.stats.apply_damage(damage_taken)
-			log.append("Took %d damage." % damage_taken)
+			outcome.log.append("Took %d damage." % damage_taken)
 			if down:
-				log.append("You are down. Rest to recover.")
+				outcome.log.append("You are down. Rest to recover.")
 
 	var rewards: Dictionary = {}
 	if gained_items.size() > 0:
@@ -39,15 +45,13 @@ func resolve(node: MapNode, character: Character) -> Dictionary:
 
 	if rewards.size() > 0:
 		var reward_log = character.apply_rewards(rewards)["log"]
-		log.append_array(reward_log)
+		outcome.log.append_array(reward_log)
 
 	if gained_items.is_empty() and damage_taken == 0:
-		log.append("Nothing happened at %s." % node.id)
+		outcome.log.append("Nothing happened at %s." % node.id)
 
-	return {
-		"log": log,
-		"down": character.is_down(),
-		"energy_spent": node.energy_cost,
-		"damage": damage_taken,
-		"items": gained_items
-	}
+	outcome.down = character.is_down()
+	outcome.energy_spent = node.energy_cost
+	outcome.damage = damage_taken
+	outcome.items = gained_items
+	return outcome

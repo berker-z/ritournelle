@@ -12,7 +12,7 @@ func select_account(name: String) -> Dictionary:
 		return {"error": "Pick an account from the list."}
 	if not SaveSystem.list_accounts().has(name):
 		return {"error": "Account not found."}
-	
+
 	var account = SaveSystem.load_account(name)
 	CraftingSystem.reset()
 	return {"account": account, "log": "Selected account: %s" % name}
@@ -27,8 +27,9 @@ func create_account(raw_name: String) -> Dictionary:
 	return {"account": account, "account_name": created_name, "log": msg}
 
 func get_character_names(account: Account) -> Array[String]:
+	var names: Array[String] = []
 	if account == null:
-		return []
+		return names
 	return account.get_character_names()
 
 func create_character(account: Account, account_name: String, name: String, background: String) -> Dictionary:
@@ -37,14 +38,14 @@ func create_character(account: Account, account_name: String, name: String, back
 	var safe_name = name.strip_edges()
 	if safe_name.is_empty():
 		safe_name = "Wanderer"
-		
+
 	var file_stub = SaveSystem.sanitize_name(safe_name, "char")
 	for existing_name in account.get_character_names():
 		if existing_name == safe_name:
 			return {"error": "Character with that name already exists."}
 		if SaveSystem.sanitize_name(existing_name, "char") == file_stub:
 			return {"error": "Character with that name already exists."}
-			
+
 	var character = Character.new_with_background(safe_name, background)
 	_seed_inventory(character)
 	account.characters.append(character)

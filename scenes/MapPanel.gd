@@ -17,7 +17,7 @@ func _ready():
 	lake_button.pressed.connect(func(): _emit_zone("lake"))
 	forest_button.pressed.connect(func(): _emit_zone("forest"))
 	mountain_button.pressed.connect(func(): _emit_zone("mountain"))
-	# ActionBar handles its own signals via SignalBus
+	# ActionBar signals are wired via controllers
 
 func refresh(current_location: String):
 	info_label.text = "Current: %s" % current_location
@@ -33,5 +33,4 @@ func _emit_zone(submap: String):
 	emit_signal("select_zone", submap)
 
 func _on_close_pressed():
-	visible = false
 	emit_signal("close_requested")

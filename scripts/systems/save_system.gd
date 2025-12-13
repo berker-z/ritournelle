@@ -9,7 +9,10 @@ const FALLBACK_BASE_DIR := "user://userdata"
 const STASH_FILE := "sharedstash.json"
 
 func _base_dirs() -> Array[String]:
-	return [PRIMARY_BASE_DIR, FALLBACK_BASE_DIR]
+	var dirs: Array[String] = []
+	dirs.append(PRIMARY_BASE_DIR)
+	dirs.append(FALLBACK_BASE_DIR)
+	return dirs
 
 func ensure_base_dirs():
 	for dir in _base_dirs():

@@ -1,7 +1,6 @@
 class_name InventorySkillsController extends Node
 
 signal log_produced(message)
-signal state_changed
 signal save_exit_requested
 
 var _inventory_panel: Control
@@ -10,14 +9,19 @@ var _skills_panel: Control
 func init(inventory_panel: Control, skills_panel: Control):
 	_inventory_panel = inventory_panel
 	_skills_panel = skills_panel
-	
 	if _inventory_panel != null:
 		_inventory_panel.equip_item.connect(_on_inventory_panel_equip)
 		_inventory_panel.unequip_slot.connect(_on_inventory_panel_unequip)
 
-# Optional: logic to create/register action bar connections if we want controller to own it
-# Main currently uses "primary_action_bar" and manually connects it.
-# We can expose request methods.
+func register_action_bar(action_bar: Node):
+	if action_bar == null:
+		return
+	if action_bar.has_signal("open_inventory"):
+		action_bar.open_inventory.connect(request_inventory)
+	if action_bar.has_signal("open_skills"):
+		action_bar.open_skills.connect(request_skills)
+	if action_bar.has_signal("save_exit"):
+		action_bar.save_exit.connect(request_save_exit)
 
 func request_inventory():
 	if not GameState.has_active_character():
@@ -42,13 +46,11 @@ func _on_inventory_panel_equip(item_id: String):
 	var logs: Array[String] = GameState.equip_item(item_id)
 	_emit_logs(logs)
 	_refresh_inventory_panel()
-	state_changed.emit()
 
 func _on_inventory_panel_unequip(slot: String):
 	var logs: Array[String] = GameState.unequip(slot)
 	_emit_logs(logs)
 	_refresh_inventory_panel()
-	state_changed.emit()
 
 func refresh_if_visible():
 	if _inventory_panel != null and _inventory_panel.visible:

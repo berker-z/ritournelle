@@ -23,10 +23,10 @@ func _ready():
 	_setup_controllers()
 	_connect_buttons()
 	_append_log("Pick or create an account to begin.")
-	
+
 	# Listen to global state changes
 	GameState.state_changed.connect(_on_state_changed)
-	
+
 	if _account_controller:
 		_account_controller.refresh_lists()
 		_account_controller.sync_visibility()
@@ -39,26 +39,27 @@ func _setup_controllers():
 	add_child(_account_controller)
 	_account_controller.init(account_panel)
 	_account_controller.log_produced.connect(_append_logs_variant)
-	_account_controller.state_changed.connect(_on_state_changed)
 
 	_inventory_skills_controller = preload("res://scripts/controllers/inventory_skills_controller.gd").new()
 	add_child(_inventory_skills_controller)
 	_inventory_skills_controller.init(inventory_panel, skills_panel)
 	_inventory_skills_controller.log_produced.connect(_append_logs_variant)
-	_inventory_skills_controller.state_changed.connect(_on_state_changed)
 	_inventory_skills_controller.save_exit_requested.connect(_on_save_exit_pressed)
+	_inventory_skills_controller.register_action_bar(primary_action_bar)
+	_inventory_skills_controller.register_action_bar(map_panel.action_bar)
+	_inventory_skills_controller.register_action_bar(town_panel.action_bar)
+	_inventory_skills_controller.register_action_bar(zone_panel.action_bar)
+	_inventory_skills_controller.register_action_bar(node_panel.action_bar)
 
 	_navigation_controller = preload("res://scripts/controllers/navigation_controller.gd").new()
 	add_child(_navigation_controller)
 	_navigation_controller.init(map_panel, town_panel, zone_panel, node_panel)
 	_navigation_controller.log_produced.connect(_append_logs_variant)
-	_navigation_controller.state_changed.connect(_on_state_changed)
 
 	_action_controller = preload("res://scripts/controllers/action_controller.gd").new()
 	add_child(_action_controller)
 	_action_controller.init(node_panel, zone_panel, town_panel)
 	_action_controller.log_produced.connect(_append_logs_variant)
-	_action_controller.state_changed.connect(_on_state_changed)
 
 	# Town Controller removed. Signals wired manually in connect_buttons or implicitly by other controllers.
 
@@ -70,32 +71,19 @@ func _process(delta):
 		_refresh_open_panels()
 
 func _connect_buttons():
-	map_button.pressed.connect(func(): _navigation_controller._on_open_map_requested())
-	
-	# SignalBus connections for global actions
-	SignalBus.inventory_requested.connect(_on_inventory_pressed)
-	SignalBus.skills_requested.connect(_on_skills_pressed)
-	SignalBus.save_exit_requested.connect(_on_save_exit_pressed)
-
-	# Close requests are still handled here for now, or could move to controller
-	map_panel.close_requested.connect(func(): map_panel.visible = false)
-	town_panel.close_requested.connect(func(): town_panel.visible = false)
-	zone_panel.close_requested.connect(func(): zone_panel.visible = false)
-	node_panel.close_requested.connect(func(): 
-		node_panel.visible = false
-		var sub = GameState.get_current_submap()
-		if sub != "":
-			if _navigation_controller:
-				_navigation_controller._on_open_zone_from_node()
+	map_button.pressed.connect(func():
+		if _navigation_controller:
+			_navigation_controller.open_map()
 	)
-	
-	# Other signals are handled by controllers init() wiring
-	# ActionBar signals (open_inventory, etc.) are now handled via SignalBus, so panel proxying is removed.
-	
+
+	# Close requests for panels are now handled by NavigationController;
+	# other signals are handled by controller init() wiring.
+
 	# Town Panel signals (manual wiring since TownController is gone)
-	town_panel.open_map.connect(func(): _navigation_controller._on_open_map_requested())
-	# Rest/Craft handled by ActionController via init wiring
-	
+	town_panel.open_map.connect(func():
+		if _navigation_controller:
+			_navigation_controller.open_map()
+	)
 
 
 func _on_state_changed():
@@ -189,11 +177,11 @@ func _refresh_open_panels():
 	primary_action_bar.set_enabled(has_character)
 	if not has_character:
 		_hide_sub_panels()
-	
+
 	if _navigation_controller:
 		# Navigation controller handles map, town, zone, node panels
 		_navigation_controller.refresh_panels()
-	
+
 	if node_panel.visible:
 		_refresh_log_outputs()
 

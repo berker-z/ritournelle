@@ -1,7 +1,6 @@
 class_name NavigationController extends Node
 
 signal log_produced(message)
-signal state_changed
 
 var _map_panel: Control
 var _town_panel: Control
@@ -13,8 +12,13 @@ func init(map_panel: Control, town_panel: Control, zone_panel: Control, node_pan
 	_town_panel = town_panel
 	_zone_panel = zone_panel
 	_node_panel = node_panel
-	
 	_connect_signals()
+
+func open_map():
+	_on_open_map_requested()
+
+func open_zone_from_node():
+	_on_open_zone_from_node()
 
 func _connect_signals():
 	_map_panel.select_zone.connect(_on_map_zone_selected)
@@ -23,24 +27,30 @@ func _connect_signals():
 	_node_panel.open_map.connect(_on_open_map_requested)
 	_node_panel.open_zone.connect(_on_open_zone_from_node)
 	_node_panel.return_pressed.connect(_on_return_pressed)
+	if _map_panel.has_signal("close_requested"):
+		_map_panel.close_requested.connect(_on_map_close_requested)
+	if _town_panel.has_signal("close_requested"):
+		_town_panel.close_requested.connect(_on_town_close_requested)
+	if _zone_panel.has_signal("close_requested"):
+		_zone_panel.close_requested.connect(_on_zone_close_requested)
+	if _node_panel.has_signal("close_requested"):
+		_node_panel.close_requested.connect(_on_node_close_requested)
 
 func _on_map_zone_selected(submap: String):
 	if not GameState.has_active_character():
 		log_produced.emit("No active character.")
 		return
-		
+
 	var logs: Array[String] = GameState.travel_to_submap(submap)
 	_emit_logs(logs)
-	state_changed.emit()
-	
+
 	_map_panel.visible = false
 	_open_location_panel()
 
 func _on_move_to_node_requested(submap: String, node_id: String):
 	var logs: Array[String] = GameState.move_to_node(submap, node_id)
 	_emit_logs(logs)
-	state_changed.emit()
-	
+
 	var current_submap = GameState.get_current_submap()
 	var current_node = GameState.get_current_node()
 	if current_submap == submap and current_node == node_id:
@@ -58,6 +68,19 @@ func _on_open_map_requested():
 	_map_panel.refresh(GameState.get_location_text())
 	_map_panel.visible = true
 
+func _on_map_close_requested():
+	_map_panel.visible = false
+
+func _on_town_close_requested():
+	_town_panel.visible = false
+
+func _on_zone_close_requested():
+	_zone_panel.visible = false
+
+func _on_node_close_requested():
+	_node_panel.visible = false
+	_on_open_zone_from_node()
+
 func _on_open_zone_from_node():
 	var submap = GameState.get_current_submap()
 	if submap == "":
@@ -67,7 +90,6 @@ func _on_open_zone_from_node():
 func _on_return_pressed():
 	var logs: Array[String] = GameState.return_to_town()
 	_emit_logs(logs)
-	state_changed.emit()
 	_open_location_panel()
 
 func _open_location_panel():
@@ -76,7 +98,7 @@ func _open_location_panel():
 		_open_town_panel()
 	elif current_submap != "":
 		_open_zone_panel(current_submap)
-	
+
 	var current_node = GameState.get_current_node()
 	if current_node != "":
 		_open_node_panel(current_submap, current_node)
@@ -126,7 +148,7 @@ func refresh_panels():
 	if not GameState.has_active_character():
 		_hide_sub_panels()
 		return
-		
+
 	# Check what is visible and refresh it
 	if _map_panel.visible:
 		_on_open_map_requested()

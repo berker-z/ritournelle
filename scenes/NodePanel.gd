@@ -33,7 +33,7 @@ func _ready():
 	combat_button.pressed.connect(func(): emit_signal("combat_pressed"))
 	rest_button.pressed.connect(func(): emit_signal("rest_pressed"))
 	craft_button.pressed.connect(func(): emit_signal("craft_pressed"))
-	# ActionBar handles its own signals via SignalBus
+	# ActionBar signals are wired via controllers
 
 func refresh(submap_name: String, node_name: String, info_text: String):
 	submap = submap_name
@@ -60,5 +60,4 @@ func set_log_lines(lines: Array):
 	info_box.scroll_to_end()
 
 func _on_close_pressed():
-	visible = false
 	emit_signal("close_requested")

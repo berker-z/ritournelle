@@ -2,30 +2,39 @@ extends Node
 
 const Recipe = preload("res://scripts/core/recipe.gd")
 const Character = preload("res://scripts/core/character.gd")
+const CraftingStartOutcome = preload("res://scripts/core/crafting_outcome.gd")
 
 var active_jobs: Array = []
 var _next_id := 1
 
-func start_job(recipe: Recipe, character: Character) -> Dictionary:
+func start_job(recipe: Recipe, character: Character) -> CraftingStartOutcome:
+	var outcome := CraftingStartOutcome.new()
 	if recipe == null or recipe.id.is_empty():
-		return {"ok": false, "log": ["Unknown recipe."]}
+		outcome.ok = false
+		outcome.log.append("Unknown recipe.")
+		return outcome
 	if not character.inventory.can_afford(recipe.inputs):
-		return {"ok": false, "log": ["Missing ingredients."]}
+		outcome.ok = false
+		outcome.log.append("Missing ingredients.")
+		return outcome
 
 	character.inventory.deduct(recipe.inputs)
 	var job = {
 		"id": _next_id,
 		"recipe": recipe,
 		"time_left": recipe.craft_time
-	}
+		}
 	_next_id += 1
 	active_jobs.append(job)
-	return {"ok": true, "log": ["Started %s (%.1fs)" % [recipe.id, recipe.craft_time]], "job_id": job["id"]}
+	outcome.ok = true
+	outcome.log.append("Started %s (%.1fs)" % [recipe.id, recipe.craft_time])
+	outcome.job_id = int(job["id"])
+	return outcome
 
 func tick(delta: float, character: Character) -> Array[String]:
-	if active_jobs.is_empty():
-		return []
 	var finished: Array[String] = []
+	if active_jobs.is_empty():
+		return finished
 	for job in active_jobs:
 		job["time_left"] -= delta
 	for job in active_jobs.duplicate():

@@ -1,10 +1,11 @@
 # Godot Development Guidelines & Best Practices
 
-This document outlines the architectural principles and coding standards for this Godot 4 project. It reflects the recent refactoring to a Service-Oriented + MVC Architecture.
+This document outlines the architectural principles and coding standards for this Godot 4.5 project. It reflects the recent refactoring to a Service-Oriented + MVC Architecture.
 
 ## 1. Architectural Patterns
 
 ### Composition Root (Main.gd)
+
 - **Role**: Wiring only.
 - **Responsibilities**:
   - Instantiates Controllers.
@@ -13,6 +14,7 @@ This document outlines the architectural principles and coding standards for thi
 - **Anti-Pattern**: DO NOT put game logic, state management, or complex signal references in `Main.gd`.
 
 ### Controllers (`scripts/controllers/`)
+
 - **Role**: Mediators between UI (View) and Logic (Services/State).
 - **Responsibilities**:
   - Listen to UI signals (e.g., `button_pressed`).
@@ -24,6 +26,7 @@ This document outlines the architectural principles and coding standards for thi
   - Controllers should NOT hold game state (player inventory, etc.).
 
 ### Services (`scripts/services/`)
+
 - **Role**: Pure business logic and data manipulation.
 - **Example**: `TravelService`, `SessionService`, `ActionService`.
 - **Responsibilities**:
@@ -36,6 +39,7 @@ This document outlines the architectural principles and coding standards for thi
   - Services should NOT access the SceneTree or UI nodes directly.
 
 ### Facade (`GameState.gd`)
+
 - **Role**: Central access point for global state and persistence.
 - **Responsibilities**:
   - Holds the "Source of Truth" (`account`, `player`, `current_submap`).
@@ -48,13 +52,15 @@ This document outlines the architectural principles and coding standards for thi
 ## 2. Coding Standards
 
 ### Type Safety
+
 - **Strict Typing**: ALWAYS use strict typing for variables and function returns.
   - **Good**: `func get_items() -> Array[String]:`
   - **Bad**: `func get_items() -> Array:`
-- **Collections**: Use typed arrays `Array[Type]` whenever possible. Godot 4 optimizes these significantly.
+- **Collections**: Use typed arrays `Array[Type]` whenever possible. Godot optimizes these significantly.
 - **Dictionaries**: Add comments describing the shape of Dictionaries if strict typing isn't possible, or prefer custom `RefCounted` classes/Resources.
 
 ### Signal Management
+
 - **SignalBus**: Use `SignalBus` (Autoload) for global, cross-cutting events (e.g., `inventory_requested`, `game_over`, `level_up`).
 - **Direct Connections**: Use direct signal connections `object.signal.connect(callable)` instead of the editor UI for dynamic components.
 - **No Bubbling**: Do not "proxy" or re-emit signals up a UI hierarchy component-by-component.
@@ -62,6 +68,7 @@ This document outlines the architectural principles and coding standards for thi
   - **Good**: `Button` emits to `SignalBus` OR `Controller` connects directly to `Button` via `Scene` ownership.
 
 ### Constants & Magic Values
+
 - **GameConstants**: Store all magic strings ("town", "combat"), paths, and configuration numbers (costs, IDs) in `scripts/core/game_constants.gd`.
 - **Enums**: Prefer `const` or `enum` over string literals.
 
@@ -75,13 +82,14 @@ This document outlines the architectural principles and coding standards for thi
   - `controllers/`: Logic mediators (`NavigationController`).
   - `services/`: Business logic (`TravelService`).
   - `systems/`: Global managers (`GameState`, `SaveSystem`).
-- `data/`: Static data files (`items.gd`, `maps.gd`) - *Consider moving to Resources in future*.
+- `data/`: Static data files (`items.gd`, `maps.gd`) - _Consider moving to Resources in future_.
 
 ---
 
 ## 4. Workflows
 
 ### Creating a New Feature
+
 1. **Model**: Define data structures in `scripts/core/`.
 2. **Service**: Implement business logic in a Service class.
 3. **Facade**: Expose relevant methods via `GameState` (if global) or inject Service.
@@ -90,6 +98,7 @@ This document outlines the architectural principles and coding standards for thi
 6. **Main**: Register the Controller.
 
 ### Refactoring Legacy Code
+
 1. Identify logic in `Main.gd` or UI scripts.
 2. Extract logic to a Service.
 3. Replace direct calls with Service calls.

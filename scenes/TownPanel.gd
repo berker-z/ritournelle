@@ -29,5 +29,4 @@ func set_enabled(has_character: bool):
 	action_bar.set_enabled(has_character)
 
 func _on_close_pressed():
-	visible = false
 	emit_signal("close_requested")

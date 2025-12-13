@@ -57,5 +57,4 @@ func _format_node_label(node_id: String, current_node: String) -> String:
 	return name
 
 func _on_close_pressed():
-	visible = false
 	emit_signal("close_requested")

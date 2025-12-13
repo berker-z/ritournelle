@@ -36,52 +36,67 @@ func list_accounts() -> Array[String]:
 
 func select_account(name: String) -> Array[String]:
 	var result = _session_service.select_account(name)
+	var logs: Array[String] = []
 	if result.has("error"):
-		return [result.error]
+		logs.append(str(result.error))
+		return logs
 	account = result.account
 	account_name = name
 	player = null
 	state_changed.emit()
-	return [result.log]
+	logs.append(str(result.log))
+	return logs
 
 func create_account(name: String) -> Array[String]:
 	var result = _session_service.create_account(name)
+	var logs: Array[String] = []
 	if result.has("error"):
-		return [result.error]
+		logs.append(str(result.error))
+		return logs
 	account = result.account
 	account_name = result.account_name
 	player = null
 	state_changed.emit()
-	return [result.log]
+	logs.append(str(result.log))
+	return logs
 
 func get_character_names() -> Array[String]:
 	return _session_service.get_character_names(account)
 
 func create_character(name: String, background: String) -> Array[String]:
 	var result = _session_service.create_character(account, account_name, name, background)
+	var logs: Array[String] = []
 	if result.has("error"):
-		return [result.error]
+		logs.append(str(result.error))
+		return logs
 	player = result.character
 	# create_character service already saves
 	state_changed.emit()
-	return [result.log]
+	logs.append(str(result.log))
+	return logs
 
 func select_character_by_name(character_name: String) -> Array[String]:
 	var result = _session_service.select_character_by_name(account, character_name)
+	var logs: Array[String] = []
 	if result.has("error"):
-		return [result.error]
+		logs.append(str(result.error))
+		return logs
 	player = result.character
 	_save_game() # Ensure state is consistent
-	return [result.log]
+	logs.append(str(result.log))
+	return logs
 
 func delete_character(character_name: String) -> Array[String]:
 	var result = _session_service.delete_character(account, account_name, character_name, player)
+	var logs: Array[String] = []
 	if result.has("error"):
-		return [result.error]
+		logs.append(str(result.error))
+		return logs
 	if result.get("reset_player", false):
 		player = null
 	state_changed.emit()
-	return [result.log]
+	logs.append(str(result.log))
+	return logs
 
 # --- Travel Service Delegates ---
 
@@ -122,20 +137,24 @@ func get_current_node() -> String:
 # --- Action Service Delegates ---
 
 func act_in_current_node(action_type: String) -> Array[String]:
+	var logs: Array[String] = []
 	if player == null:
-		return ["No active character."]
+		logs.append("No active character.")
+		return logs
 	var node_id = get_current_node()
 	var submap = get_current_submap()
 	if node_id == "" or submap == GameConstants.SUBMAP_TOWN:
-		return ["Move to a node first."]
-	
+		logs.append("Move to a node first.")
+		return logs
+
 	# We need the MapNode object. ActionService expects it.
 	# TravelService has the nodes.
 	if not _travel_service.nodes.has(node_id):
-		return ["Node data missing."]
+		logs.append("Node data missing.")
+		return logs
 	var base_node = _travel_service.nodes[node_id]
-	
-	var logs = _action_service.act_in_node(player, base_node, submap, action_type)
+
+	logs = _action_service.act_in_node(player, base_node, submap, action_type)
 	_save_game()
 	return logs
 
@@ -152,12 +171,15 @@ func start_craft(recipe_id: String) -> Array[String]:
 # --- Inventory / Equipment (Facade) ---
 
 func get_inventory_lines() -> Array[String]:
-	if player == null: return []
+	if player == null:
+		var empty: Array[String] = []
+		return empty
 	return player.inventory.to_lines()
 
 func get_equipped_entries() -> Array[Dictionary]:
-	if player == null: return []
 	var entries: Array[Dictionary] = []
+	if player == null:
+		return entries
 	for slot in player.equipped.keys():
 		var item_id: String = player.equipped.get(slot, "")
 		var meta = ItemsData.get_item_static(item_id) if item_id != "" else {}
@@ -171,8 +193,9 @@ func get_equipped_entries() -> Array[Dictionary]:
 	return entries
 
 func get_equipment_inventory_entries() -> Array[Dictionary]:
-	if player == null: return []
 	var entries: Array[Dictionary] = []
+	if player == null:
+		return entries
 	for item_id in player.inventory.items.keys():
 		var count: int = int(player.inventory.items[item_id])
 		var meta = ItemsData.get_item_static(item_id)
@@ -188,8 +211,9 @@ func get_equipment_inventory_entries() -> Array[Dictionary]:
 	return entries
 
 func get_item_inventory_entries() -> Array[Dictionary]:
-	if player == null: return []
 	var entries: Array[Dictionary] = []
+	if player == null:
+		return entries
 	for item_id in player.inventory.items.keys():
 		var count: int = int(player.inventory.items[item_id])
 		var meta = ItemsData.get_item_static(item_id)
@@ -205,25 +229,31 @@ func get_item_inventory_entries() -> Array[Dictionary]:
 
 # Helper actions for inventory (Equip/Unequip) - could be in ActionService
 func equip_item(item_id: String) -> Array[String]:
+	var logs: Array[String] = []
 	if player == null:
-		return ["No active character."]
+		logs.append("No active character.")
+		return logs
 	var message = player.equip_item(item_id)
 	_save_game()
-	return [message]
+	logs.append(message)
+	return logs
 
 func unequip(slot: String) -> Array[String]:
+	var logs: Array[String] = []
 	if player == null:
-		return ["No active character."]
+		logs.append("No active character.")
+		return logs
 	var message = player.unequip_slot(slot)
 	_save_game()
-	return [message]
+	logs.append(message)
+	return logs
 
 # --- System ---
 
 func tick(delta: float) -> Array[String]:
-	if player == null:
-		return []
 	var logs: Array[String] = []
+	if player == null:
+		return logs
 	for entry in CraftingSystem.tick(delta, player):
 		logs.append(entry)
 	if logs.size() > 0:
