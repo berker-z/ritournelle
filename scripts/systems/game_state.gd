@@ -289,3 +289,6 @@ func _create_new_character_and_save(account_name: String, character: Character):
 	player = character
 	player.location = GameConstants.SUBMAP_TOWN
 	SaveSystem.save_character(account_name, character)
+
+func save_checkpoint():
+	_save_game()

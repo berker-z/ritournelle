@@ -108,7 +108,7 @@ func _on_skills_pressed():
 
 func _on_save_exit_pressed():
 	if GameState.has_active_character():
-		SaveSystem.save_character(GameState.account_name, GameState.player)
+		GameState.save_checkpoint()
 	_append_log("Saved. Exiting.")
 	get_tree().quit()
 

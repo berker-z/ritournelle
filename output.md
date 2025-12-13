@@ -345,3 +345,16 @@ Once Phase 0 is done, Phase 1 (single router + single render path) becomes much 
 - Travel ownership:
   - `TravelService` no longer mutates `player` directly; it exposes pure functions that take `location` and `energy` and return a typed `TravelOutcome` (`log`, `ok`, `energy_cost`, `new_location`).
   - `GameState` applies travel outcomes by consuming energy via `player.stats.consume_energy(outcome.energy_cost)`, updating `player.location`, and saving via `_save_game()`, keeping world mutation and persistence centralized.
+
+---
+
+### Phase 5 — Persistence checkpoints (completed)
+
+- Centralized saving through `GameState`:
+  - Added `GameState.save_checkpoint()` as the public persistence entrypoint; it wraps the private `_save_game()` (which calls `SaveSystem.save_character` and emits `state_changed`).
+  - `Main.gd`’s Save & Exit flow now calls `GameState.save_checkpoint()` instead of using `SaveSystem` directly, eliminating the duplicate persistence path.
+- Defined save checkpoints (behavior-preserving):
+  - Session/account: `GameState` saves when selecting a character and uses `save_checkpoint()` when needed; `SessionService` handles only account/character file creation/loading/deletion.
+  - Travel/movement: `GameState.travel_to_submap`, `move_to_node`, and `return_to_town` apply `TravelOutcome` and call `_save_game()` once per successful travel action.
+  - Actions: `GameState.act_in_current_node`, `rest`, `start_craft`, `equip_item`, and `unequip` remain the discrete action checkpoints that trigger saving, rather than lower-level mutations doing so implicitly.
+  - Crafting ticks: `GameState.tick` saves only when a crafting tick produces log entries (i.e., when jobs complete), not every frame.
