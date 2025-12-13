@@ -239,10 +239,11 @@ All under `scripts/services/`:
   - Composition root; owns:
     - Wiring of controllers and panels.
     - Top‑level overlay frame (ActionBar + StatusBar + InfoBox) that mirrors what overlays use.
+    - UI view‑model aggregation (current): formats status lines and maintains a rolling log buffer which it pushes into visible `OverlayFrame` instances.
   - The main screen shows:
     - Navigation row with `Map` button.
     - Bottom `OverlayFrame` with ActionBar/StatusBar/InfoBox for logs + status.
-  - All gameplay actions go through overlays and controllers; Main itself has no business logic.
+  - All gameplay actions go through overlays and controllers; Main does not implement game rules, but it currently performs some UI presenter duties (status/log fan-out). See `nextsteps.md` for the intended extraction into a dedicated UI presenter controller.
 - `AccountPanel.tscn`
   - Full‑screen overlay for account/character management.
   - Emits semantic signals:
