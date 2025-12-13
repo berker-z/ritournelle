@@ -321,8 +321,8 @@ Once Phase 0 is done, Phase 1 (single router + single render path) becomes much 
 - ~~Phase 0 — Stabilize typing (make it run reliably).~~
 - ~~Phase 1 — Single UI router + single refresh pipeline.~~
 - ~~Phase 2 — Remove parallel architecture (kill duplicate controllers fast).~~
-- Phase 3 — Replace Dictionary-as-API with typed result objects.
-- Phase 4 — Re-align services with “GameState owns mutation” + “domain doesn’t know Godot”.
+- ~~Phase 3 — Replace Dictionary-as-API with typed result objects.~~
+- ~~Phase 4 — Re-align services with “GameState owns mutation” + “domain doesn’t know Godot”.~~
 - Phase 5 — Persistence as its own phase with explicit checkpoints (no implicit save-after-every-mutation).
 
 ### Phase 3 (Typed results) — Progress
@@ -336,3 +336,12 @@ Once Phase 0 is done, Phase 1 (single router + single render path) becomes much 
 - Session/account flows:
   - Typed session result classes added in `scripts/core/` (`AccountSelectionResult`, `AccountCreationResult`, `CharacterCreationResult`, `CharacterSelectionResult`, `CharacterDeletionResult`).
   - `SessionService` now returns these typed results instead of `Dictionary` for account/character operations, and `GameState` has been updated to read their fields (`error`, `log`, `account`, `character`, `reset_player`) when building UI log arrays.
+
+### Phase 4 (Ownership & purity) — Progress
+
+- Session and crafting ownership:
+  - `SessionService` no longer calls `CraftingSystem.reset()` directly; it only returns typed results and performs persistence via `SaveSystem`.
+  - `GameState` is now the single place that resets `CraftingSystem` on account/character changes (select/create/delete), aligning reset behavior with the “GameState owns canonical state and mutation checkpoints” rule.
+- Travel ownership:
+  - `TravelService` no longer mutates `player` directly; it exposes pure functions that take `location` and `energy` and return a typed `TravelOutcome` (`log`, `ok`, `energy_cost`, `new_location`).
+  - `GameState` applies travel outcomes by consuming energy via `player.stats.consume_energy(outcome.energy_cost)`, updating `player.location`, and saving via `_save_game()`, keeping world mutation and persistence centralized.

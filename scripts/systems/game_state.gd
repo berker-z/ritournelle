@@ -8,6 +8,7 @@ const ActionService = preload("res://scripts/services/action_service.gd")
 const ItemsData = preload("res://data/items.gd")
 const Account = preload("res://scripts/core/account.gd")
 const Character = preload("res://scripts/core/character.gd")
+const TravelOutcome = preload("res://scripts/core/travel_outcome.gd")
 
 var _session_service: SessionService
 var _travel_service: TravelService
@@ -110,19 +111,35 @@ func list_nodes(submap: String) -> Array[String]:
 	return _travel_service.list_nodes(submap)
 
 func travel_to_submap(submap: String) -> Array[String]:
-	var logs = _travel_service.travel_to_submap(player, submap)
+	var logs: Array[String] = []
+	if player == null:
+		logs.append("No active character. Create or select one first.")
+		return logs
+	var outcome: TravelOutcome = _travel_service.travel_to_submap(player.location, player.stats.energy, submap)
+	logs.append_array(outcome.log)
+	if not outcome.ok:
+		return logs
+	player.stats.consume_energy(outcome.energy_cost)
+	player.location = outcome.new_location
 	_save_game()
 	return logs
 
 func move_to_node(submap: String, node_id: String) -> Array[String]:
-	var logs = _travel_service.move_to_node(player, submap, node_id)
+	var logs: Array[String] = []
+	if player == null:
+		logs.append("No active character.")
+		return logs
+	var outcome: TravelOutcome = _travel_service.move_to_node(player.location, player.stats.energy, submap, node_id)
+	logs.append_array(outcome.log)
+	if not outcome.ok:
+		return logs
+	player.stats.consume_energy(outcome.energy_cost)
+	player.location = outcome.new_location
 	_save_game()
 	return logs
 
 func return_to_town() -> Array[String]:
-	var logs = _travel_service.return_to_town(player)
-	_save_game()
-	return logs
+	return travel_to_submap(GameConstants.SUBMAP_TOWN)
 
 func get_location_text() -> String:
 	if player == null:
