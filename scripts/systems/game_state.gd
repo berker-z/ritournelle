@@ -37,27 +37,27 @@ func list_accounts() -> Array[String]:
 func select_account(name: String) -> Array[String]:
 	var result = _session_service.select_account(name)
 	var logs: Array[String] = []
-	if result.has("error"):
-		logs.append(str(result.error))
+	if result.error != "":
+		logs.append(result.error)
 		return logs
 	account = result.account
 	account_name = name
 	player = null
+	CraftingSystem.reset()
 	state_changed.emit()
-	logs.append(str(result.log))
+	logs.append(result.log)
 	return logs
 
 func create_account(name: String) -> Array[String]:
 	var result = _session_service.create_account(name)
 	var logs: Array[String] = []
-	if result.has("error"):
-		logs.append(str(result.error))
-		return logs
+	# Account creation currently never sets an error; it always returns a created/loaded account.
 	account = result.account
 	account_name = result.account_name
 	player = null
+	CraftingSystem.reset()
 	state_changed.emit()
-	logs.append(str(result.log))
+	logs.append(result.log)
 	return logs
 
 func get_character_names() -> Array[String]:
@@ -66,36 +66,39 @@ func get_character_names() -> Array[String]:
 func create_character(name: String, background: String) -> Array[String]:
 	var result = _session_service.create_character(account, account_name, name, background)
 	var logs: Array[String] = []
-	if result.has("error"):
-		logs.append(str(result.error))
+	if result.error != "":
+		logs.append(result.error)
 		return logs
 	player = result.character
 	# create_character service already saves
+	CraftingSystem.reset()
 	state_changed.emit()
-	logs.append(str(result.log))
+	logs.append(result.log)
 	return logs
 
 func select_character_by_name(character_name: String) -> Array[String]:
 	var result = _session_service.select_character_by_name(account, character_name)
 	var logs: Array[String] = []
-	if result.has("error"):
-		logs.append(str(result.error))
+	if result.error != "":
+		logs.append(result.error)
 		return logs
 	player = result.character
+	CraftingSystem.reset()
 	_save_game() # Ensure state is consistent
-	logs.append(str(result.log))
+	logs.append(result.log)
 	return logs
 
 func delete_character(character_name: String) -> Array[String]:
 	var result = _session_service.delete_character(account, account_name, character_name, player)
 	var logs: Array[String] = []
-	if result.has("error"):
-		logs.append(str(result.error))
+	if result.error != "":
+		logs.append(result.error)
 		return logs
-	if result.get("reset_player", false):
+	if result.reset_player:
 		player = null
+		CraftingSystem.reset()
 	state_changed.emit()
-	logs.append(str(result.log))
+	logs.append(result.log)
 	return logs
 
 # --- Travel Service Delegates ---

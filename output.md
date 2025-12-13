@@ -324,3 +324,15 @@ Once Phase 0 is done, Phase 1 (single router + single render path) becomes much 
 - Phase 3 — Replace Dictionary-as-API with typed result objects.
 - Phase 4 — Re-align services with “GameState owns mutation” + “domain doesn’t know Godot”.
 - Phase 5 — Persistence as its own phase with explicit checkpoints (no implicit save-after-every-mutation).
+
+### Phase 3 (Typed results) — Progress
+
+- Encounters:
+  - `EncounterOutcome` added in `scripts/core/encounter_outcome.gd`.
+  - `EncounterSystem.resolve()` now returns `EncounterOutcome` instead of a `Dictionary`, and `ActionService.act_in_node()` consumes `result.log`.
+- Crafting:
+  - `CraftingStartOutcome` added in `scripts/core/crafting_outcome.gd`.
+  - `CraftingSystem.start_job()` now returns `CraftingStartOutcome`, and `ActionService.start_craft()` consumes `outcome.log`.
+- Session/account flows:
+  - Typed session result classes added in `scripts/core/` (`AccountSelectionResult`, `AccountCreationResult`, `CharacterCreationResult`, `CharacterSelectionResult`, `CharacterDeletionResult`).
+  - `SessionService` now returns these typed results instead of `Dictionary` for account/character operations, and `GameState` has been updated to read their fields (`error`, `log`, `account`, `character`, `reset_player`) when building UI log arrays.

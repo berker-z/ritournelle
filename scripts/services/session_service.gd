@@ -2,29 +2,40 @@ class_name SessionService extends RefCounted
 
 const Character = preload("res://scripts/core/character.gd")
 const Account = preload("res://scripts/core/account.gd")
+const AccountSelectionResult = preload("res://scripts/core/account_selection_result.gd")
+const AccountCreationResult = preload("res://scripts/core/account_creation_result.gd")
+const CharacterCreationResult = preload("res://scripts/core/character_creation_result.gd")
+const CharacterSelectionResult = preload("res://scripts/core/character_selection_result.gd")
+const CharacterDeletionResult = preload("res://scripts/core/character_deletion_result.gd")
 # SaveSystem and CraftingSystem are Autoloads, so accessible globally.
 
 func list_accounts() -> Array[String]:
 	return SaveSystem.list_accounts()
 
-func select_account(name: String) -> Dictionary:
+func select_account(name: String) -> AccountSelectionResult:
+	var result: AccountSelectionResult = AccountSelectionResult.new()
 	if name.is_empty():
-		return {"error": "Pick an account from the list."}
+		result.error = "Pick an account from the list."
+		return result
 	if not SaveSystem.list_accounts().has(name):
-		return {"error": "Account not found."}
+		result.error = "Account not found."
+		return result
 
-	var account = SaveSystem.load_account(name)
-	CraftingSystem.reset()
-	return {"account": account, "log": "Selected account: %s" % name}
+	result.account = SaveSystem.load_account(name)
+	result.log = "Selected account: %s" % name
+	return result
 
-func create_account(raw_name: String) -> Dictionary:
+func create_account(raw_name: String) -> AccountCreationResult:
+	var result: AccountCreationResult = AccountCreationResult.new()
 	var target_name = SaveSystem.sanitize_name(raw_name, "account")
 	var existed = SaveSystem.list_accounts().has(target_name)
 	var created_name = SaveSystem.create_account(raw_name)
 	var account = SaveSystem.load_account(created_name)
-	CraftingSystem.reset()
 	var msg = "Selected existing account: %s" % created_name if existed else "Created account: %s" % created_name
-	return {"account": account, "account_name": created_name, "log": msg}
+	result.account = account
+	result.account_name = created_name
+	result.log = msg
+	return result
 
 func get_character_names(account: Account) -> Array[String]:
 	var names: Array[String] = []
@@ -32,9 +43,11 @@ func get_character_names(account: Account) -> Array[String]:
 		return names
 	return account.get_character_names()
 
-func create_character(account: Account, account_name: String, name: String, background: String) -> Dictionary:
+func create_character(account: Account, account_name: String, name: String, background: String) -> CharacterCreationResult:
+	var result: CharacterCreationResult = CharacterCreationResult.new()
 	if account == null:
-		return {"error": "Select or create an account first."}
+		result.error = "Select or create an account first."
+		return result
 	var safe_name = name.strip_edges()
 	if safe_name.is_empty():
 		safe_name = "Wanderer"
@@ -42,41 +55,50 @@ func create_character(account: Account, account_name: String, name: String, back
 	var file_stub = SaveSystem.sanitize_name(safe_name, "char")
 	for existing_name in account.get_character_names():
 		if existing_name == safe_name:
-			return {"error": "Character with that name already exists."}
+			result.error = "Character with that name already exists."
+			return result
 		if SaveSystem.sanitize_name(existing_name, "char") == file_stub:
-			return {"error": "Character with that name already exists."}
+			result.error = "Character with that name already exists."
+			return result
 
 	var character = Character.new_with_background(safe_name, background)
 	_seed_inventory(character)
 	account.characters.append(character)
-	# Set as active implicitly by return?
-	# GameState usually sets player, location, saves.
 	character.location = GameConstants.SUBMAP_TOWN
 	SaveSystem.save_character(account_name, character)
-	CraftingSystem.reset()
-	return {"character": character, "log": "Created %s (%s) and set active." % [safe_name, background]}
+	result.character = character
+	result.log = "Created %s (%s) and set active." % [safe_name, background]
+	return result
 
-func select_character_by_name(account: Account, character_name: String) -> Dictionary:
+func select_character_by_name(account: Account, character_name: String) -> CharacterSelectionResult:
+	var result: CharacterSelectionResult = CharacterSelectionResult.new()
 	if account == null:
-		return {"error": "Select or create an account first."}
+		result.error = "Select or create an account first."
+		return result
 	for c in account.characters:
 		if c.name == character_name:
-			CraftingSystem.reset()
-			return {"character": c, "log": "Selected %s." % c.name}
-	return {"error": "Character not found."}
+			result.character = c
+			result.log = "Selected %s." % c.name
+			return result
+	result.error = "Character not found."
+	return result
 
-func delete_character(account: Account, account_name: String, character_name: String, current_player: Character) -> Dictionary:
+func delete_character(account: Account, account_name: String, character_name: String, current_player: Character) -> CharacterDeletionResult:
+	var result: CharacterDeletionResult = CharacterDeletionResult.new()
 	if account == null:
-		return {"error": "Select or create an account first."}
+		result.error = "Select or create an account first."
+		return result
 	for c in account.characters:
 		if c.name == character_name:
 			account.characters.erase(c)
 			SaveSystem.delete_character(account_name, character_name)
-			var reset_player = (current_player == c)
-			if reset_player:
-				CraftingSystem.reset()
-			return {"success": true, "reset_player": reset_player, "log": "Deleted %s." % character_name}
-	return {"error": "Character not found."}
+			var reset_player: bool = (current_player == c)
+			result.success = true
+			result.reset_player = reset_player
+			result.log = "Deleted %s." % character_name
+			return result
+	result.error = "Character not found."
+	return result
 
 func _seed_inventory(character: Character):
 	character.inventory.add("log", 3)
