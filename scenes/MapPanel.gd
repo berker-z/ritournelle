@@ -4,8 +4,7 @@ signal close_requested
 signal select_zone(submap: String)
 
 @onready var info_label: Label = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoLabel
-@onready var info_box: Control = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoBox
-@onready var action_bar = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ActionRow/ActionBar
+@onready var overlay_frame: Control = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/OverlayFrame
 @onready var close_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header/CloseButton
 @onready var town_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Zones/Row1/TownButton
 @onready var lake_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Zones/Row1/LakeButton
@@ -24,16 +23,20 @@ func refresh(current_location: String):
 	info_label.text = "Current: %s" % current_location
 
 func set_enabled(has_character: bool):
-	action_bar.set_enabled(has_character)
+	overlay_frame.set_enabled(has_character)
 	town_button.disabled = not has_character
 	lake_button.disabled = not has_character
 	forest_button.disabled = not has_character
 	mountain_button.disabled = not has_character
 
 func set_log_lines(lines: Array):
-	if info_box:
-		info_box.set_lines(lines)
-		info_box.scroll_to_end()
+	overlay_frame.set_log_lines(lines)
+
+func set_status_lines(lines: Array):
+	overlay_frame.set_status_lines(lines)
+
+func get_overlay_frame() -> Control:
+	return overlay_frame
 
 func _emit_zone(submap: String):
 	emit_signal("select_zone", submap)

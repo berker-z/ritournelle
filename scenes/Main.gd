@@ -1,10 +1,8 @@
 extends Control
 
 # UI references
-@onready var log_box: Control = $ScrollContainer/MarginContainer/VBoxContainer/LogBox
-@onready var status_label: Label = $ScrollContainer/MarginContainer/VBoxContainer/Status
-@onready var map_button: Button = $ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/MapButton
-@onready var primary_action_bar: Control = $ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/PrimaryActionBar
+@onready var overlay_frame: Control = $MainLayout/OverlayFrame
+@onready var map_button: Button = $MainLayout/ScrollContainer/MarginContainer/VBoxContainer/NavigationRow/MapButton
 @onready var inventory_panel: Control = $InventoryPanel
 @onready var skills_panel: Control = $SkillsPanel
 @onready var map_panel: Control = $MapPanel
@@ -18,6 +16,7 @@ var _account_controller
 var _navigation_controller
 var _action_controller
 var _log_lines: Array[String] = []
+var _current_status_lines: Array = []
 
 func _ready():
 	_setup_controllers()
@@ -45,11 +44,11 @@ func _setup_controllers():
 	_inventory_skills_controller.init(inventory_panel, skills_panel)
 	_inventory_skills_controller.log_produced.connect(_append_logs_variant)
 	_inventory_skills_controller.save_exit_requested.connect(_on_save_exit_pressed)
-	_inventory_skills_controller.register_action_bar(primary_action_bar)
-	_inventory_skills_controller.register_action_bar(map_panel.action_bar)
-	_inventory_skills_controller.register_action_bar(town_panel.action_bar)
-	_inventory_skills_controller.register_action_bar(zone_panel.action_bar)
-	_inventory_skills_controller.register_action_bar(node_panel.action_bar)
+	_inventory_skills_controller.register_action_bar(overlay_frame)
+	_inventory_skills_controller.register_action_bar(map_panel.get_overlay_frame())
+	_inventory_skills_controller.register_action_bar(town_panel.get_overlay_frame())
+	_inventory_skills_controller.register_action_bar(zone_panel.get_overlay_frame())
+	_inventory_skills_controller.register_action_bar(node_panel.get_overlay_frame())
 
 	_navigation_controller = preload("res://scripts/controllers/navigation_controller.gd").new()
 	add_child(_navigation_controller)
@@ -92,6 +91,7 @@ func _on_state_changed():
 	_refresh_open_panels()
 
 func _on_panels_changed():
+	_sync_overlay_status()
 	_refresh_log_outputs()
 
 func _append_logs_variant(msg):
@@ -132,9 +132,8 @@ func _append_logs(lines: Array):
 		_append_log(str(line))
 
 func _refresh_log_outputs():
-	if log_box != null:
-		log_box.set_lines(_log_lines)
-		log_box.scroll_to_end()
+	if overlay_frame != null:
+		overlay_frame.set_log_lines(_log_lines)
 	if map_panel != null and map_panel.visible:
 		map_panel.set_log_lines(_log_lines)
 	if town_panel != null and town_panel.visible:
@@ -146,28 +145,35 @@ func _refresh_log_outputs():
 
 func _refresh_status():
 	var p = GameState.player
-	var status_lines: Array = []
+	_current_status_lines = []
 	if not GameState.has_account_selected():
-		status_lines.append("No account selected.")
+		_current_status_lines.append("No account selected.")
 	elif p == null:
-		status_lines.append("No active character. Create or select one.")
+		_current_status_lines.append("No active character. Create or select one.")
 	else:
-		status_lines.append("Location: %s" % GameState.get_location_text())
-		status_lines.append("HP %d/%d | Energy %.1f/%.1f" % [p.stats.hp, p.stats.hp_max, p.stats.energy, p.stats.energy_max])
-		var equipped_entries = GameState.get_equipped_entries()
-		equipped_entries.sort_custom(func(a, b): return a.get("slot", "") < b.get("slot", ""))
-		var eq_parts: Array = []
-		for entry in equipped_entries:
-			var slot = entry.get("slot", "")
-			var name = entry.get("name", "")
-			eq_parts.append("%s: %s" % [slot.capitalize(), name if name != "" else "Empty"])
-		status_lines.append("Equipped: " + ", ".join(eq_parts))
-		status_lines.append("Open Inventory/Skills to manage gear and view XP.")
-	status_label.text = "\n".join(status_lines)
+		var line := "Location: %s | HP %d/%d | Energy %.1f/%.1f" % [
+			GameState.get_location_text(),
+			p.stats.hp, p.stats.hp_max,
+			p.stats.energy, p.stats.energy_max
+		]
+		_current_status_lines.append(line)
+	_sync_overlay_status()
 	_set_action_buttons_enabled(p != null)
 	if _inventory_skills_controller:
 		_inventory_skills_controller.refresh_if_visible()
 	_refresh_open_panels()
+
+func _sync_overlay_status():
+	if overlay_frame != null:
+		overlay_frame.set_status_lines(_current_status_lines)
+	if map_panel != null and map_panel.visible:
+		map_panel.set_status_lines(_current_status_lines)
+	if town_panel != null and town_panel.visible:
+		town_panel.set_status_lines(_current_status_lines)
+	if zone_panel != null and zone_panel.visible:
+		zone_panel.set_status_lines(_current_status_lines)
+	if node_panel != null and node_panel.visible:
+		node_panel.set_status_lines(_current_status_lines)
 
 # Removed _refresh_map_panel, _open_town_panel, _open_zone_panel, _open_node_panel
 # _hide_sub_panels is kept for now or removed if no longer used.
@@ -184,7 +190,6 @@ func _refresh_open_panels():
 	if _account_controller:
 		_account_controller.refresh_lists()
 		_account_controller.sync_visibility()
-	primary_action_bar.set_enabled(has_character)
 	if not has_character:
 		_hide_sub_panels()
 
@@ -204,7 +209,7 @@ func _refresh_visibility():
 
 func _set_action_buttons_enabled(enabled: bool):
 	map_button.disabled = not enabled
-	primary_action_bar.set_enabled(enabled)
+	overlay_frame.set_enabled(enabled)
 	map_panel.set_enabled(enabled)
 	town_panel.set_enabled(enabled)
 	zone_panel.set_enabled(enabled)

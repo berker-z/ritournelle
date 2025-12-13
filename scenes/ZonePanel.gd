@@ -7,13 +7,12 @@ signal craft_pressed
 signal move_to_node(submap: String, node_id: String)
 
 @onready var title_label: Label = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header/Title
-@onready var info_box: Control = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoBox
 @onready var nodes_container: VBoxContainer = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Nodes/NodeList
 @onready var close_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header/CloseButton
 @onready var rest_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Actions/RestButton
 @onready var craft_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Actions/CraftButton
 @onready var map_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Actions/MapButton
-@onready var action_bar = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/BottomRow/ActionBar
+@onready var overlay_frame: Control = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/OverlayFrame
 
 var submap: String = ""
 
@@ -33,15 +32,19 @@ func set_enabled(has_character: bool):
 	rest_button.disabled = not has_character
 	craft_button.disabled = not has_character
 	map_button.disabled = not has_character
-	action_bar.set_enabled(has_character)
+	overlay_frame.set_enabled(has_character)
 	for button in nodes_container.get_children():
 		if button is Button:
 			button.disabled = not has_character
 
 func set_log_lines(lines: Array):
-	if info_box:
-		info_box.set_lines(lines)
-		info_box.scroll_to_end()
+	overlay_frame.set_log_lines(lines)
+
+func set_status_lines(lines: Array):
+	overlay_frame.set_status_lines(lines)
+
+func get_overlay_frame() -> Control:
+	return overlay_frame
 
 func _rebuild_nodes(node_ids: Array, current_node: String):
 	for child in nodes_container.get_children():

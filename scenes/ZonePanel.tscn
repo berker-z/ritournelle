@@ -1,8 +1,7 @@
-[gd_scene load_steps=4 format=3 uid="uid://yx0egnhmy10t"]
+[gd_scene load_steps=3 format=3 uid="uid://yx0egnhmy10t"]
 
 [ext_resource type="Script" uid="uid://d4ekaf6yr1myo" path="res://scenes/ZonePanel.gd" id="1"]
-[ext_resource type="PackedScene" path="res://scenes/ActionBar.tscn" id="2"]
-[ext_resource type="PackedScene" path="res://scenes/InfoBox.tscn" id="3"]
+[ext_resource type="PackedScene" path="res://scenes/OverlayFrame.tscn" id="2"]
 
 [node name="ZonePanel" type="Control"]
 visible = false
@@ -102,13 +101,5 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Map"
 
-[node name="BottomRow" type="HBoxContainer" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 8
-
-[node name="ActionBar" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/BottomRow" instance=ExtResource("2")]
-layout_mode = 2
-
-[node name="InfoBox" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer" instance=ExtResource("3")]
+[node name="OverlayFrame" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer" instance=ExtResource("2")]
 layout_mode = 2

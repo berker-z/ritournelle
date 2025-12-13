@@ -238,11 +238,10 @@ All under `scripts/services/`:
 - `Main.tscn` / `Main.gd`
   - Composition root; owns:
     - Wiring of controllers and panels.
-    - Top‑level log display and status text.
+    - Top‑level overlay frame (ActionBar + StatusBar + InfoBox) that mirrors what overlays use.
   - The main screen shows:
-    - Logs (`InfoBox` instance).
-    - Status (location, HP/energy, equipped items).
-    - Navigation row with `Map` button and a primary `ActionBar` (Inventory/Skills/Save & Exit).
+    - Navigation row with `Map` button.
+    - Bottom `OverlayFrame` with ActionBar/StatusBar/InfoBox for logs + status.
   - All gameplay actions go through overlays and controllers; Main itself has no business logic.
 - `AccountPanel.tscn`
   - Full‑screen overlay for account/character management.
@@ -268,18 +267,23 @@ All under `scripts/services/`:
   - Emits:
     - `move_to_node(submap, node_id)`, `rest_pressed`, `craft_pressed`, `open_map`, `close_requested`.
 - `NodePanel.tscn`
-  - Per‑node actions:
+  - Per-node actions:
     - Harvest, Combat, Return to Town, Rest, Craft, Map/back to zone.
   - Emits:
     - `harvest_pressed`, `combat_pressed`, `return_pressed`,
       `rest_pressed`, `craft_pressed`, `open_map`, `open_zone`, `close_requested`.
+- All full‑screen panels (Main, MapPanel, TownPanel, ZonePanel, NodePanel) host a shared `OverlayFrame` at the bottom; controllers hand status/log lines to the frame instead of poking InfoBox/StatusBar directly.
 - Shared UI components:
+  - `OverlayFrame.tscn`:
+    - Stacked container with `ActionBar`, `StatusBar`, and `InfoBox`.
+    - Public API: `set_status_lines(lines)`, `set_log_lines(lines)`, `set_enabled(has_character)`.
+    - Re‑emits the ActionBar signals (`open_inventory`, `open_skills`, `save_exit`), so controllers only bind to the frame.
   - `ActionBar.tscn`:
     - Buttons for Inventory, Skills, Save & Exit.
     - Emits `open_inventory`, `open_skills`, `save_exit`.
   - `InfoBox.tscn`:
-    - Scrollable log display for global action logs.
-    - Instanced on Main, MapPanel, TownPanel, ZonePanel, and NodePanel in a consistent bottom slot.
+    - Scrollable log display for global action logs; authored as a normal stacked child (no full‑screen anchors).
+    - Instanced inside `OverlayFrame`.
   - `InventoryPanel.tscn`:
     - Full‑screen inventory overlay:
       - Shows equipped slots, equipment pool, and items list.

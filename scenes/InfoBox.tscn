@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://deawd8ubyi6gi"]
 
-[ext_resource type="Script" path="res://scenes/InfoBox.gd" id="1"]
+[ext_resource type="Script" uid="uid://i7okrk4gv882" path="res://scenes/InfoBox.gd" id="1"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
 bg_color = Color(0.117647, 0.117647, 0.117647, 1)
@@ -10,20 +10,19 @@ corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
 [node name="InfoBox" type="Control"]
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 0
+offset_right = 600.0
+offset_bottom = 200.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 mouse_filter = 1
 script = ExtResource("1")
 
 [node name="PanelContainer" type="PanelContainer" parent="."]
-layout_mode = 0
-anchor_right = 1.0
-anchor_bottom = 1.0
+layout_mode = 3
+anchors_preset = 15
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("1")
@@ -41,14 +40,13 @@ theme_override_constants/margin_bottom = 8
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-horizontal_scroll_mode = 0
 follow_focus = true
+horizontal_scroll_mode = 0
 
 [node name="RichTextLabel" type="RichTextLabel" parent="PanelContainer/MarginContainer/ScrollContainer"]
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-custom_minimum_size = Vector2(0, 160)
-bbcode_enabled = false
+focus_mode = 2
 selection_enabled = true
-autowrap_mode = 3

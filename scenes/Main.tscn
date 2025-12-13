@@ -1,15 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://c54ne36dr70pf"]
+[gd_scene load_steps=10 format=3 uid="uid://c54ne36dr70pf"]
 
 [ext_resource type="Script" uid="uid://bvni7b4bfeytt" path="res://scenes/Main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://dql4rkolhiq2r" path="res://scenes/InventoryPanel.tscn" id="2"]
 [ext_resource type="PackedScene" uid="uid://skillspanel" path="res://scenes/SkillsPanel.tscn" id="3"]
-[ext_resource type="PackedScene" path="res://scenes/ActionBar.tscn" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/OverlayFrame.tscn" id="4"]
 [ext_resource type="PackedScene" path="res://scenes/MapPanel.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/TownPanel.tscn" id="6"]
 [ext_resource type="PackedScene" uid="uid://yx0egnhmy10t" path="res://scenes/ZonePanel.tscn" id="7"]
 [ext_resource type="PackedScene" path="res://scenes/NodePanel.tscn" id="8"]
-[ext_resource type="PackedScene" path="res://scenes/InfoBox.tscn" id="9"]
-[ext_resource type="PackedScene" path="res://scenes/AccountPanel.tscn" id="10"]
+[ext_resource type="PackedScene" path="res://scenes/AccountPanel.tscn" id="9"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -20,58 +19,54 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="MainLayout" type="VBoxContainer" parent="."]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MainLayout"]
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 follow_focus = true
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="ScrollContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="MainLayout/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ScrollContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="MainLayout/ScrollContainer/MarginContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="MainLayout/ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Ritournelle Text Harness"
 horizontal_alignment = 1
 
-[node name="NavigationLabel" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer"]
+[node name="NavigationLabel" type="Label" parent="MainLayout/ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 text = "Navigation"
 
-[node name="NavigationRow" type="HBoxContainer" parent="ScrollContainer/MarginContainer/VBoxContainer"]
+[node name="NavigationRow" type="HBoxContainer" parent="MainLayout/ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="MapButton" type="Button" parent="ScrollContainer/MarginContainer/VBoxContainer/NavigationRow"]
+[node name="MapButton" type="Button" parent="MainLayout/ScrollContainer/MarginContainer/VBoxContainer/NavigationRow"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Map"
 
-[node name="PrimaryActionBar" parent="ScrollContainer/MarginContainer/VBoxContainer/NavigationRow" instance=ExtResource("4")]
-
-[node name="Status" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 1
-text = "Status..."
-vertical_alignment = 1
-autowrap_mode = 2
-
-[node name="LogBox" parent="ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("9")]
+[node name="OverlayFrame" parent="MainLayout" instance=ExtResource("4")]
 layout_mode = 2
 
 [node name="MapPanel" parent="." instance=ExtResource("5")]
@@ -92,5 +87,5 @@ layout_mode = 1
 [node name="SkillsPanel" parent="." instance=ExtResource("3")]
 layout_mode = 1
 
-[node name="AccountPanel" parent="." instance=ExtResource("10")]
+[node name="AccountPanel" parent="." instance=ExtResource("9")]
 layout_mode = 1
