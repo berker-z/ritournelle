@@ -4,6 +4,7 @@ signal close_requested
 signal select_zone(submap: String)
 
 @onready var info_label: Label = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoLabel
+@onready var info_box: Control = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/InfoBox
 @onready var action_bar = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ActionRow/ActionBar
 @onready var close_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Header/CloseButton
 @onready var town_button: Button = $MarginContainer/PanelContainer/MarginContainer/VBoxContainer/Zones/Row1/TownButton
@@ -28,6 +29,11 @@ func set_enabled(has_character: bool):
 	lake_button.disabled = not has_character
 	forest_button.disabled = not has_character
 	mountain_button.disabled = not has_character
+
+func set_log_lines(lines: Array):
+	if info_box:
+		info_box.set_lines(lines)
+		info_box.scroll_to_end()
 
 func _emit_zone(submap: String):
 	emit_signal("select_zone", submap)

@@ -1,6 +1,7 @@
 class_name NavigationController extends Node
 
 signal log_produced(message)
+signal panels_changed
 
 var _map_panel: Control
 var _town_panel: Control
@@ -67,25 +68,31 @@ func _on_open_map_requested():
 	_map_panel.set_enabled(true)
 	_map_panel.refresh(GameState.get_location_text())
 	_map_panel.visible = true
+	panels_changed.emit()
 
 func _on_map_close_requested():
 	_map_panel.visible = false
+	panels_changed.emit()
 
 func _on_town_close_requested():
 	_town_panel.visible = false
+	panels_changed.emit()
 
 func _on_zone_close_requested():
 	_zone_panel.visible = false
+	panels_changed.emit()
 
 func _on_node_close_requested():
 	_node_panel.visible = false
 	_on_open_zone_from_node()
+	panels_changed.emit()
 
 func _on_open_zone_from_node():
 	var submap = GameState.get_current_submap()
 	if submap == "":
 		return
 	_open_zone_panel(submap)
+	panels_changed.emit()
 
 func _on_return_pressed():
 	var logs: Array[String] = GameState.return_to_town()
@@ -102,12 +109,14 @@ func _open_location_panel():
 	var current_node = GameState.get_current_node()
 	if current_node != "":
 		_open_node_panel(current_submap, current_node)
+	panels_changed.emit()
 
 func _open_town_panel():
 	_hide_sub_panels()
 	_town_panel.set_enabled(true)
 	_town_panel.refresh("Location: %s" % GameState.get_location_text())
 	_town_panel.visible = true
+	panels_changed.emit()
 
 func _open_zone_panel(submap: String):
 	if submap == GameConstants.SUBMAP_TOWN:
@@ -120,6 +129,7 @@ func _open_zone_panel(submap: String):
 	var info = "Location: %s" % GameState.get_location_text()
 	_zone_panel.refresh(submap, nodes, current_node, info)
 	_zone_panel.visible = true
+	panels_changed.emit()
 
 func _open_node_panel(submap: String, node_id: String):
 	if node_id == "":
@@ -129,6 +139,7 @@ func _open_node_panel(submap: String, node_id: String):
 	var info = "Location: %s" % GameState.get_location_text()
 	_node_panel.refresh(submap, node_id, info)
 	_node_panel.visible = true
+	panels_changed.emit()
 
 func _hide_sub_panels():
 	_map_panel.visible = false

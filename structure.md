@@ -278,7 +278,8 @@ All under `scripts/services/`:
     - Buttons for Inventory, Skills, Save & Exit.
     - Emits `open_inventory`, `open_skills`, `save_exit`.
   - `InfoBox.tscn`:
-    - Scrollable log display; used on Main and Node panels.
+    - Scrollable log display for global action logs.
+    - Instanced on Main, MapPanel, TownPanel, ZonePanel, and NodePanel in a consistent bottom slot.
   - `InventoryPanel.tscn`:
     - Full‑screen inventory overlay:
       - Shows equipped slots, equipment pool, and items list.

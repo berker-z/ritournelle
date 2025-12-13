@@ -39,7 +39,6 @@ func refresh(submap_name: String, node_name: String, info_text: String):
 	submap = submap_name
 	node_id = node_name
 	title_label.text = "Node: %s" % node_name.replace("_", " ").capitalize()
-	info_box.set_text(info_text)
 
 func set_enabled(has_character: bool):
 	var buttons = [

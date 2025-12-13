@@ -55,6 +55,7 @@ func _setup_controllers():
 	add_child(_navigation_controller)
 	_navigation_controller.init(map_panel, town_panel, zone_panel, node_panel)
 	_navigation_controller.log_produced.connect(_append_logs_variant)
+	_navigation_controller.panels_changed.connect(_on_panels_changed)
 
 	_action_controller = preload("res://scripts/controllers/action_controller.gd").new()
 	add_child(_action_controller)
@@ -89,6 +90,9 @@ func _connect_buttons():
 func _on_state_changed():
 	_refresh_status()
 	_refresh_open_panels()
+
+func _on_panels_changed():
+	_refresh_log_outputs()
 
 func _append_logs_variant(msg):
 	# Controllers might emit Variant (String or Array)
@@ -131,7 +135,13 @@ func _refresh_log_outputs():
 	if log_box != null:
 		log_box.set_lines(_log_lines)
 		log_box.scroll_to_end()
-	if node_panel != null:
+	if map_panel != null and map_panel.visible:
+		map_panel.set_log_lines(_log_lines)
+	if town_panel != null and town_panel.visible:
+		town_panel.set_log_lines(_log_lines)
+	if zone_panel != null and zone_panel.visible:
+		zone_panel.set_log_lines(_log_lines)
+	if node_panel != null and node_panel.visible:
 		node_panel.set_log_lines(_log_lines)
 
 func _refresh_status():
@@ -182,8 +192,7 @@ func _refresh_open_panels():
 		# Navigation controller handles map, town, zone, node panels
 		_navigation_controller.refresh_panels()
 
-	if node_panel.visible:
-		_refresh_log_outputs()
+	_refresh_log_outputs()
 
 func _refresh_visibility():
 	if _account_controller:

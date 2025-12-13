@@ -27,7 +27,6 @@ func _ready():
 func refresh(submap_name: String, node_ids: Array, current_node: String, info_text: String):
 	submap = submap_name
 	title_label.text = "Zone: %s" % submap_name.capitalize()
-	info_box.set_text(info_text)
 	_rebuild_nodes(node_ids, current_node)
 
 func set_enabled(has_character: bool):
@@ -38,6 +37,11 @@ func set_enabled(has_character: bool):
 	for button in nodes_container.get_children():
 		if button is Button:
 			button.disabled = not has_character
+
+func set_log_lines(lines: Array):
+	if info_box:
+		info_box.set_lines(lines)
+		info_box.scroll_to_end()
 
 func _rebuild_nodes(node_ids: Array, current_node: String):
 	for child in nodes_container.get_children():

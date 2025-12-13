@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scenes/MapPanel.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/ActionBar.tscn" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/InfoBox.tscn" id="3"]
 
 [node name="MapPanel" type="Control"]
 visible = false
@@ -116,4 +117,7 @@ size_flags_vertical = 1
 theme_override_constants/separation = 8
 
 [node name="ActionBar" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer/ActionRow" instance=ExtResource("2")]
+layout_mode = 2
+
+[node name="InfoBox" parent="MarginContainer/PanelContainer/MarginContainer/VBoxContainer" instance=ExtResource("3")]
 layout_mode = 2

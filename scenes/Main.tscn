@@ -63,9 +63,6 @@ text = "Map"
 
 [node name="PrimaryActionBar" parent="ScrollContainer/MarginContainer/VBoxContainer/NavigationRow" instance=ExtResource("4")]
 
-[node name="LogBox" parent="ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("9")]
-layout_mode = 2
-
 [node name="Status" type="Label" parent="ScrollContainer/MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -73,6 +70,9 @@ size_flags_vertical = 1
 text = "Status..."
 vertical_alignment = 1
 autowrap_mode = 2
+
+[node name="LogBox" parent="ScrollContainer/MarginContainer/VBoxContainer" instance=ExtResource("9")]
+layout_mode = 2
 
 [node name="MapPanel" parent="." instance=ExtResource("5")]
 layout_mode = 1
